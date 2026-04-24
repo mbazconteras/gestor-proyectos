@@ -29,9 +29,7 @@ window.Proyectos = {
 
   construirEntradaHistorial(texto, usuario) {
     const limpio = window.Utils.normalizarTexto(texto);
-    if (!limpio) {
-      return `${window.Utils.formatDateStampNow()} - ${usuario} escribió:`;
-    }
+    if (!limpio) return "";
     return `${window.Utils.formatDateStampNow()} - ${usuario} escribió:\n${limpio}`;
   },
 
@@ -169,14 +167,18 @@ window.Proyectos = {
 
     const usuario = window.Auth.currentUser?.usuario || "sistema";
     const historialAnterior = window.Utils.normalizarTexto(original.Historial);
-    const nuevoComentario = window.Utils.normalizarTexto(registroEditado.NuevoComentario);
-    const nuevoBloque = this.construirEntradaHistorial(nuevoComentario, usuario);
+    const historialCapturado = window.Utils.normalizarTexto(registroEditado.Historial);
+
+    let nuevoBloque = "";
+    if (historialCapturado && historialCapturado !== historialAnterior) {
+      nuevoBloque = this.construirEntradaHistorial(historialCapturado, usuario);
+    } else {
+      nuevoBloque = `${window.Utils.formatDateStampNow()} - ${usuario} actualizó el proyecto`;
+    }
 
     payload.Historial = historialAnterior
       ? `${nuevoBloque}\n\n${historialAnterior}`
       : nuevoBloque;
-
-    delete payload.NuevoComentario;
 
     await window.database.ref(`Registros/${key}`).set(payload);
 
@@ -190,6 +192,34 @@ window.Proyectos = {
 
     this.aplicarFiltros(window.UI.getFilters());
     return normalized;
+  },
+
+  async enviarMensajeAsignacion({ proyectoId, proyecto, responsable, detallesAdicionales }) {
+    const fromUser = window.Utils.normalizarTexto(window.Auth.currentUser?.usuario || "");
+    const toUser = window.Utils.normalizarTexto(responsable || "");
+
+    if (!fromUser || !toUser) {
+      console.warn("No se envió mensaje interno: faltan _From o _To.");
+      return;
+    }
+
+    const msgId = String(Date.now());
+    const detalles = window.Utils.normalizarTexto(detallesAdicionales);
+
+    const body =
+      `Se te asignó el proyecto ID: ${proyectoId}\n\n` +
+      `Proyecto: ${window.Utils.normalizarTexto(proyecto)}\n\n` +
+      `Detalles adicionales:\n${detalles || "Sin detalles adicionales"}\n\n` +
+      `Puede ir al gestor de proyectos y revisar y actualizar los detalles de avance.`;
+
+    const payload = {
+      ID: msgId,
+      _From: fromUser,
+      _To: toUser,
+      _Body: body
+    };
+
+    await window.database.ref(`CalCenter/${msgId}`).set(payload);
   },
 
   async crearNuevo(datos) {
@@ -209,7 +239,7 @@ window.Proyectos = {
       PO: window.Utils.normalizarTexto(datos.PO),
       Nombre: window.Utils.normalizarTexto(datos.Nombre),
       Link: "",
-      Historial: historialInicial,
+      Historial: historialInicial || `${window.Utils.formatDateStampNow()} - ${usuario} creó el proyecto`,
       Entregado: "",
       FechaEntrega: "",
       In_DateStamp: window.Utils.formatDateStampNow(),
@@ -224,6 +254,17 @@ window.Proyectos = {
     }
 
     await window.database.ref(`Registros/${key}`).set(payload);
+
+    try {
+      await this.enviarMensajeAsignacion({
+        proyectoId: id,
+        proyecto: payload.Proyecto,
+        responsable: payload.Nombre,
+        detallesAdicionales: datos.Historial
+      });
+    } catch (err) {
+      console.error("No se pudo enviar el mensaje interno de asignación:", err);
+    }
 
     const normalized = window.Utils.normalizarRegistro(key, payload);
 
