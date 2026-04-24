@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestor de Proyectos</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- LOGIN -->
+    <section id="loginView" class="view active">
+      <div class="login-shell">
+        <div class="login-card">
+          <div class="login-brand">
+            <div class="brand-badge">GP</div>
+            <div>
+              <h1>Gestor de Proyectos</h1>
+              <p>Acceso al sistema</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="loginUsuario">Usuario</label>
+            <input
+              type="text"
+              id="loginUsuario"
+              placeholder="Ingresa tu usuario"
+              autocomplete="username"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="loginPassword">Contraseña</label>
+            <input
+              type="password"
+              id="loginPassword"
+              placeholder="Ingresa tu contraseña"
+              autocomplete="current-password"
+            />
+          </div>
+
+          <button id="btnLogin" class="btn btn-primary btn-block">Ingresar</button>
+          <div id="loginMessage" class="message"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MAIN -->
+    <section id="mainView" class="view">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="brand-mark">GP</div>
+          <div>
+            <h2>Dashboard de Proyectos</h2>
+            <div class="topbar-subtitle">Seguimiento operativo y control de avance</div>
+          </div>
+        </div>
+
+        <div class="topbar-center">
+          <div id="sessionBadge" class="session-badge"></div>
+          <div id="todayBadge" class="today-badge"></div>
+        </div>
+
+        <div class="topbar-right">
+          <button id="btnNuevoProyecto" class="btn btn-primary hidden">Nuevo proyecto</button>
+          <button id="btnLogout" class="btn btn-secondary">Cerrar sesión</button>
+        </div>
+      </header>
+
+      <main class="dashboard-layout">
+        <!-- PANEL IZQUIERDO -->
+        <section class="panel panel-left">
+          <div class="panel-left-header">
+            <div>
+              <h3>Resumen general</h3>
+              <p>Indicadores y lista de proyectos visibles</p>
+            </div>
+          </div>
+
+          <div id="kpiGrid" class="kpi-grid">
+            <div class="kpi-card kpi-total">
+              <div class="kpi-label">Total</div>
+              <div class="kpi-value" id="kpiTotal">0</div>
+            </div>
+            <div class="kpi-card kpi-dev">
+              <div class="kpi-label">En desarrollo</div>
+              <div class="kpi-value" id="kpiDesarrollo">0</div>
+            </div>
+            <div class="kpi-card kpi-wait">
+              <div class="kpi-label">En espera</div>
+              <div class="kpi-value" id="kpiEspera">0</div>
+            </div>
+            <div class="kpi-card kpi-print">
+              <div class="kpi-label">Impresos</div>
+              <div class="kpi-value" id="kpiImpreso">0</div>
+            </div>
+            <div class="kpi-card kpi-delivery">
+              <div class="kpi-label">Entregados</div>
+              <div class="kpi-value" id="kpiEntregado">0</div>
+            </div>
+            <div class="kpi-card kpi-bill">
+              <div class="kpi-label">Facturados</div>
+              <div class="kpi-value" id="kpiFacturado">0</div>
+            </div>
+            <div class="kpi-card kpi-paid">
+              <div class="kpi-label">Pagados</div>
+              <div class="kpi-value" id="kpiPagado">0</div>
+            </div>
+          </div>
+
+          <div class="filters-grid dashboard-filters">
+            <div class="form-group">
+              <label for="searchInput">Buscar</label>
+              <input
+                type="text"
+                id="searchInput"
+                placeholder="ID, proyecto, cliente, PO o responsable"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="filterCliente">Cliente</label>
+              <select id="filterCliente">
+                <option value="">Todos</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="filterResponsable">Responsable</label>
+              <select id="filterResponsable">
+                <option value="">Todos</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="filterEstado">Estado</label>
+              <select id="filterEstado">
+                <option value="">Todos</option>
+                <option value="Sin iniciar">Sin iniciar</option>
+                <option value="Iniciado">Iniciado</option>
+                <option value="En desarrollo">En desarrollo</option>
+                <option value="En espera">En espera</option>
+                <option value="Impreso">Impreso</option>
+                <option value="Entregado">Entregado</option>
+                <option value="Facturado">Facturado</option>
+                <option value="Pagado">Pagado</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="projects-table">
+              <thead>
+                <tr>
+                  <th id="thSortID" class="sortable">
+                    <span>ID</span>
+                    <span id="sortIdIndicator" class="sort-indicator">▼</span>
+                  </th>
+                  <th>Proyecto</th>
+                  <th>Cliente</th>
+                  <th>Responsable</th>
+                  <th>PO</th>
+                  <th>Estado</th>
+                  <th>Últ. avance</th>
+                </tr>
+              </thead>
+              <tbody id="projectsTableBody"></tbody>
+            </table>
+          </div>
+
+          <div id="tableEmpty" class="empty-state hidden">
+            No hay registros para mostrar.
+          </div>
+        </section>
+
+        <!-- PANEL DERECHO -->
+        <section class="panel panel-right">
+          <div id="detailEmpty" class="detail-empty">
+            Selecciona un proyecto para ver su ficha detallada.
+          </div>
+
+          <div id="detailContent" class="hidden">
+            <div class="detail-hero">
+              <div class="detail-hero-main">
+                <div class="detail-icon">📁</div>
+                <div>
+                  <div class="detail-mini">Ficha del proyecto</div>
+                  <h3 id="detailTitle">Proyecto</h3>
+                  <div class="detail-meta-line">
+                    <span id="detailClienteMini">Cliente</span>
+                    <span class="dot-sep">•</span>
+                    <span id="detailResponsableMini">Responsable</span>
+                    <span class="dot-sep">•</span>
+                    <span id="detailIDMini">ID</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="detail-hero-actions">
+                <span id="detailEstadoBadge" class="status-badge">Sin iniciar</span>
+                <button id="btnGuardarProyecto" class="btn btn-primary">Guardar</button>
+              </div>
+            </div>
+
+            <div class="progress-card">
+              <div class="progress-card-header">
+                <div>
+                  <div class="section-title">Progreso general</div>
+                  <div id="progressText" class="progress-text">0 / 12 etapas completadas</div>
+                </div>
+              </div>
+              <div class="progress-bar-shell">
+                <div id="progressBar" class="progress-bar-fill"></div>
+              </div>
+            </div>
+
+            <div class="detail-section section-general">
+              <div class="section-header">
+                <div class="section-icon">📌</div>
+                <h4>Datos generales</h4>
+              </div>
+
+              <div class="detail-grid">
+                <div class="form-group">
+                  <label for="fieldID">ID</label>
+                  <input type="text" id="fieldID" disabled />
+                </div>
+
+                <div class="form-group">
+                  <label for="fieldProyecto">Proyecto</label>
+                  <input type="text" id="fieldProyecto" />
+                </div>
+
+                <div class="form-group">
+                  <label for="fieldCliente">Cliente</label>
+                  <input type="text" id="fieldCliente" />
+                </div>
+
+                <div class="form-group">
+                  <label for="fieldPO">PO</label>
+                  <input type="text" id="fieldPO" />
+                </div>
+
+                <div class="form-group">
+                  <label for="fieldNombre">Responsable</label>
+                  <input type="text" id="fieldNombre" />
+                </div>
+
+                <div class="form-group full-width">
+                  <label for="fieldLink">Link OneDrive</label>
+                  <div class="inline-action">
+                    <input type="text" id="fieldLink" />
+                    <button type="button" id="btnAbrirAdjunto" class="btn btn-secondary">
+                      Abrir adjunto
+                    </button>
+                  </div>
+                </div>
+
+                <div class="form-group full-width">
+                  <label for="fieldInDateStamp">Fecha de alta</label>
+                  <input type="text" id="fieldInDateStamp" disabled />
+                </div>
+              </div>
+            </div>
+
+            <div class="detail-section section-entrega">
+              <div class="section-header">
+                <div class="section-icon">🚚</div>
+                <h4>Detalles de la entrega</h4>
+              </div>
+
+              <div class="detail-grid">
+                <div class="form-group">
+                  <label for="fieldFechaEntrega">Fecha entrega</label>
+                  <input type="text" id="fieldFechaEntrega" disabled />
+                </div>
+
+                <div class="form-group">
+                  <label for="fieldQuienEntrega">Quien entrega</label>
+                  <input type="text" id="fieldQuienEntrega" disabled />
+                </div>
+
+                <div class="form-group">
+                  <label for="fieldQuienRecibe">Quien recibe</label>
+                  <input type="text" id="fieldQuienRecibe" disabled />
+                </div>
+
+                <div class="form-group full-width">
+                  <label for="fieldObservacionesEntrega">Observaciones</label>
+                  <textarea id="fieldObservacionesEntrega" rows="3" disabled></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="detail-section section-historial">
+              <div class="section-header">
+                <div class="section-icon">🕘</div>
+                <h4>Bitácora</h4>
+              </div>
+
+              <div id="historialBitacora" class="historial-bitacora"></div>
+
+              <div class="form-group comment-box">
+                <label for="fieldNuevoComentario">Nuevo comentario</label>
+                <textarea
+                  id="fieldNuevoComentario"
+                  rows="4"
+                  placeholder="Escribe aquí el nuevo comentario para la bitácora"
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="detail-section section-steps">
+              <div class="section-header">
+                <div class="section-icon">🧭</div>
+                <h4>Timeline de etapas</h4>
+              </div>
+              <div id="stepsContainer" class="steps-list"></div>
+            </div>
+
+            <div class="detail-section section-qr">
+              <div class="section-header">
+                <div class="section-icon">🔳</div>
+                <h4>QR del proyecto</h4>
+              </div>
+
+              <div class="qr-card">
+                <div id="qrContainer" class="qr-box"></div>
+                <div class="qr-actions">
+                  <button id="btnDescargarQR" class="btn btn-secondary">Descargar QR</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="saveMessage" class="message"></div>
+          </div>
+        </section>
+      </main>
+    </section>
+  </div>
+
+  <!-- MODAL NUEVO PROYECTO -->
+  <div id="modalNuevoProyecto" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Nuevo proyecto</h3>
+        <button id="btnCerrarModalNuevo" class="icon-btn" type="button">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="detail-grid">
+          <div class="form-group">
+            <label for="nuevoIDPreview">ID</label>
+            <input
+              type="text"
+              id="nuevoIDPreview"
+              disabled
+              placeholder="Se generará automáticamente"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="nuevoProyecto">Proyecto</label>
+            <input type="text" id="nuevoProyecto" />
+          </div>
+
+          <div class="form-group">
+            <label for="nuevoCliente">Cliente</label>
+            <select id="nuevoCliente">
+              <option value="">Selecciona un cliente</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="nuevoPO">PO</label>
+            <input type="text" id="nuevoPO" />
+          </div>
+
+          <div class="form-group full-width">
+            <label for="nuevoResponsable">Responsable</label>
+            <select id="nuevoResponsable">
+              <option value="">Selecciona un responsable</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="nuevoHistorial">Detalles Adicionales</label>
+          <textarea
+            id="nuevoHistorial"
+            rows="4"
+            placeholder="Comentarios iniciales del administrador"
+          ></textarea>
+        </div>
+
+        <div id="newProjectMessage" class="message"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btnCrearProyecto" class="btn btn-primary">Crear proyecto</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/proyectos.js"></script>
+  <script src="js/qr.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
