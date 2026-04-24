@@ -12,6 +12,29 @@ window.Auth = {
     return txt === "true" || txt === "1" || txt === "si" || txt === "sí";
   },
 
+  async crearCuentaPendiente(usuario, password) {
+    const nombre = this.getText(usuario);
+    const pwd = this.getText(password);
+
+    if (!nombre || !pwd) {
+      throw new Error("Debes ingresar usuario y contraseña.");
+    }
+
+    const id = String(Date.now());
+
+    const nuevoUsuario = {
+      ID: id,
+      IsAdmin: false,
+      Nombre: nombre,
+      Password: pwd,
+      eMail: "",
+      status: false
+    };
+
+    await window.database.ref(`Usuarios/${id}`).set(nuevoUsuario);
+    return nuevoUsuario;
+  },
+
   async login(usuario, password) {
     const user = this.getText(usuario);
     const pass = this.getText(password);
@@ -24,7 +47,21 @@ window.Auth = {
     const users = snap.val();
 
     if (!users) {
-      throw new Error("No existe el nodo Usuarios o está vacío.");
+      const confirmar = window.confirm(
+        "El usuario no existe.\n\n" +
+        `Usuario: ${user}\n\n` +
+        "¿Deseas solicitar una cuenta nueva con estos datos?\n" +
+        "Tu usuario y tu password serán creados cuando el administrador del sistema lo autorice."
+      );
+
+      if (!confirmar) {
+        throw new Error("Solicitud de cuenta cancelada.");
+      }
+
+      await this.crearCuentaPendiente(user, pass);
+      throw new Error(
+        "Cuenta nueva registrada. Tu usuario y tu password serán creados y habilitados cuando el administrador del sistema lo autorice."
+      );
     }
 
     let encontrado = null;
@@ -42,11 +79,11 @@ window.Auth = {
       }
 
       if (pwd !== pass) {
-        throw new Error("Contraseña incorrecta.");
+        throw new Error("Contraseña incorrecta. Si ya tienes una cuenta, verifica tus datos.");
       }
 
       if (!activo) {
-        throw new Error("Tu usuario está inactivo. No tienes acceso.");
+        throw new Error("Tu usuario existe pero está pendiente de autorización o inactivo. Consulta con el administrador del sistema.");
       }
 
       encontrado = {
@@ -64,7 +101,21 @@ window.Auth = {
     }
 
     if (!encontrado) {
-      throw new Error("Usuario no encontrado.");
+      const confirmar = window.confirm(
+        "El usuario no existe.\n\n" +
+        `Usuario: ${user}\n\n` +
+        "¿Deseas solicitar una cuenta nueva con estos datos?\n" +
+        "Tu usuario y tu password serán creados cuando el administrador del sistema lo autorice."
+      );
+
+      if (!confirmar) {
+        throw new Error("Solicitud de cuenta cancelada.");
+      }
+
+      await this.crearCuentaPendiente(user, pass);
+      throw new Error(
+        "Cuenta nueva registrada. Tu usuario y tu password serán creados y habilitados cuando el administrador del sistema lo autorice."
+      );
     }
 
     this.currentUser = encontrado;
