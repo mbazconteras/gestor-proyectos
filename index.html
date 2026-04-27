@@ -72,14 +72,14 @@
       <main class="dashboard-layout">
         <!-- PANEL IZQUIERDO -->
         <section class="panel panel-left">
-          <div class="panel-left-header">
+          <div class="panel-left-header compact-header">
             <div>
               <h3>Resumen general</h3>
-              <p>Indicadores y lista de proyectos visibles</p>
+              <p>Indicadores y proyectos visibles</p>
             </div>
           </div>
 
-          <div id="kpiGrid" class="kpi-grid">
+          <div id="kpiGrid" class="kpi-grid compact-kpis">
             <div class="kpi-card kpi-total">
               <div class="kpi-label">Total</div>
               <div class="kpi-value" id="kpiTotal">0</div>
@@ -110,34 +110,31 @@
             </div>
           </div>
 
-          <div class="filters-grid dashboard-filters">
-            <div class="form-group">
-              <label for="searchInput">Buscar</label>
+          <div class="filters-grid dashboard-filters compact-filters">
+            <div class="form-group compact-filter-group">
               <input
                 type="text"
                 id="searchInput"
-                placeholder="ID, proyecto, cliente, PO o responsable"
+                placeholder="Buscar por ID, proyecto, cliente, PO o responsable"
+                aria-label="Buscar"
               />
             </div>
 
-            <div class="form-group">
-              <label for="filterCliente">Cliente</label>
-              <select id="filterCliente">
-                <option value="">Todos</option>
+            <div class="form-group compact-filter-group">
+              <select id="filterCliente" aria-label="Filtrar por cliente">
+                <option value="">Cliente</option>
               </select>
             </div>
 
-            <div class="form-group">
-              <label for="filterResponsable">Responsable</label>
-              <select id="filterResponsable">
-                <option value="">Todos</option>
+            <div class="form-group compact-filter-group">
+              <select id="filterResponsable" aria-label="Filtrar por responsable">
+                <option value="">Responsable</option>
               </select>
             </div>
 
-            <div class="form-group">
-              <label for="filterEstado">Estado</label>
-              <select id="filterEstado">
-                <option value="">Todos</option>
+            <div class="form-group compact-filter-group">
+              <select id="filterEstado" aria-label="Filtrar por estado">
+                <option value="">Estado</option>
                 <option value="Sin iniciar">Sin iniciar</option>
                 <option value="Iniciado">Iniciado</option>
                 <option value="En desarrollo">En desarrollo</option>
@@ -150,7 +147,7 @@
             </div>
           </div>
 
-          <div class="table-wrapper">
+          <div class="table-wrapper projects-table-wrapper">
             <table class="projects-table">
               <thead>
                 <tr>
@@ -387,11 +384,11 @@
         </div>
 
         <div class="form-group">
-          <label for="nuevoHistorial">Detalles Adicionales</label>
+          <label for="nuevoHistorial">Comentario inicial</label>
           <textarea
             id="nuevoHistorial"
             rows="4"
-            placeholder="Comentarios iniciales del administrador"
+            placeholder="Escribe el comentario inicial de la bitácora"
           ></textarea>
         </div>
 
