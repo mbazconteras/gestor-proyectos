@@ -6,14 +6,8 @@ window.App = {
     }
 
     window.UI.init();
-
-    const restored = window.Auth.restoreSession();
-    if (restored) {
-      window.UI.showMain();
-      await this.cargarSistema();
-    } else {
-      window.UI.showLogin();
-    }
+    window.Auth.logout();
+    window.UI.showLogin();
   },
 
   async handleLogin() {
