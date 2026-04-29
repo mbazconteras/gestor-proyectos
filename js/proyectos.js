@@ -136,64 +136,6 @@ window.Proyectos = {
     return this.getByKey(key);
   },
 
-  async guardarDesdeFormulario(registroEditado) {
-    const key = registroEditado._firebaseKey;
-    if (!key) throw new Error("No se encontró la clave del registro.");
-
-    const original = this.getByKey(key) || {};
-    if (!this.usuarioPuedeEditar(original)) {
-      throw new Error("No tienes permiso para editar este proyecto.");
-    }
-
-    const payload = { ...original, ...registroEditado };
-
-    payload.ID = Number(payload.ID) || Number(key);
-    payload.Cliente = window.Utils.normalizarTexto(payload.Cliente);
-    payload.Proyecto = window.Utils.normalizarTexto(payload.Proyecto);
-    payload.PO = window.Utils.normalizarTexto(payload.PO);
-    payload.Nombre = window.Utils.normalizarTexto(payload.Nombre);
-    payload.Link = window.Utils.normalizarTexto(payload.Link);
-    payload.Entregado = window.Utils.normalizarTexto(payload.Entregado);
-    payload.FechaEntrega = window.Utils.normalizarFechaTexto(payload.FechaEntrega);
-    payload.In_DateStamp = window.Utils.normalizarTexto(payload.In_DateStamp);
-    payload.URLSign = window.Utils.normalizarTexto(payload.URLSign);
-    payload.LastEditUser = window.Auth.currentUser?.usuario || "";
-    payload.LastEditDate = new Date().toISOString();
-
-    for (let i = 1; i <= 12; i++) {
-      payload[`Step${i}`] = window.Utils.normalizarBoolean(payload[`Step${i}`]);
-      payload[`Step${i}_Date`] = window.Utils.normalizarFechaTexto(payload[`Step${i}_Date`]);
-    }
-
-    const usuario = window.Auth.currentUser?.usuario || "sistema";
-    const historialAnterior = window.Utils.normalizarTexto(original.Historial);
-    const historialCapturado = window.Utils.normalizarTexto(registroEditado.Historial);
-
-    let nuevoBloque = "";
-    if (historialCapturado && historialCapturado !== historialAnterior) {
-      nuevoBloque = this.construirEntradaHistorial(historialCapturado, usuario);
-    } else {
-      nuevoBloque = `${window.Utils.formatDateStampNow()} - ${usuario} actualizó el proyecto`;
-    }
-
-    payload.Historial = historialAnterior
-      ? `${nuevoBloque}\n\n${historialAnterior}`
-      : nuevoBloque;
-
-    await window.database.ref(`Registros/${key}`).set(payload);
-
-    const idx = this.all.findIndex((x) => x._firebaseKey === key);
-    const normalized = window.Utils.normalizarRegistro(key, payload);
-
-    if (idx >= 0) {
-      this.all[idx] = normalized;
-      this.ordenarLista(this.all);
-    }
-
-    this.aplicarFiltros(window.UI.getFilters());
-    return normalized;
-  },
-
   async enviarMensajeAsignacion({ proyectoId, proyecto, responsable, detallesAdicionales }) {
     const fromUser = window.Utils.normalizarTexto(window.Auth.currentUser?.usuario || "");
     const toUser = window.Utils.normalizarTexto(responsable || "");
@@ -220,6 +162,91 @@ window.Proyectos = {
     };
 
     await window.database.ref(`CalCenter/${msgId}`).set(payload);
+  },
+
+  async guardarDesdeFormulario(registroEditado) {
+    const key = registroEditado._firebaseKey;
+    if (!key) throw new Error("No se encontró la clave del registro.");
+
+    const original = this.getByKey(key) || {};
+    if (!this.usuarioPuedeEditar(original)) {
+      throw new Error("No tienes permiso para editar este proyecto.");
+    }
+
+    const payload = { ...original, ...registroEditado };
+
+    payload.ID = Number(payload.ID) || Number(key);
+    payload.Cliente = window.Utils.normalizarTexto(payload.Cliente);
+    payload.Proyecto = window.Utils.normalizarTexto(payload.Proyecto);
+    payload.PO = window.Utils.normalizarTexto(payload.PO);
+    payload.Nombre = window.Utils.normalizarTexto(payload.Nombre);
+    payload.Link = window.Utils.normalizarTexto(payload.Link);
+    payload.Entregado = window.Utils.normalizarTexto(payload.Entregado);
+    payload.FechaEntrega = window.Utils.normalizarFechaTexto(payload.FechaEntrega);
+    payload.In_DateStamp = window.Utils.normalizarTexto(payload.In_DateStamp);
+    payload.URLSign = window.Utils.normalizarTexto(payload.URLSign);
+    payload.LastEditUser = window.Auth.currentUser?.usuario || "";
+    payload.LastEditDate = new Date().toISOString();
+
+    const originalResponsable = window.Utils.normalizarTexto(original.Nombre);
+    const nuevoResponsable = window.Utils.normalizarTexto(payload.Nombre);
+    const responsableCambio = originalResponsable !== nuevoResponsable;
+
+    if (!window.Auth.currentUser?.administrador && responsableCambio) {
+      throw new Error("Solo un administrador puede reasignar el responsable.");
+    }
+
+    for (let i = 1; i <= 12; i++) {
+      payload[`Step${i}`] = window.Utils.normalizarBoolean(payload[`Step${i}`]);
+      payload[`Step${i}_Date`] = window.Utils.normalizarFechaTexto(payload[`Step${i}_Date`]);
+    }
+
+    const usuario = window.Auth.currentUser?.usuario || "sistema";
+    const historialAnterior = window.Utils.normalizarTexto(original.Historial);
+    let comentarioNuevo = window.Utils.normalizarTexto(registroEditado.NuevoComentario);
+
+    if (responsableCambio && !comentarioNuevo) {
+      comentarioNuevo = "Reasignación de responsable";
+    }
+
+    let nuevoBloque = "";
+    if (comentarioNuevo) {
+      nuevoBloque = this.construirEntradaHistorial(comentarioNuevo, usuario);
+    } else {
+      nuevoBloque = `${window.Utils.formatDateStampNow()} - ${usuario} actualizó el proyecto`;
+    }
+
+    payload.Historial = historialAnterior
+      ? `${nuevoBloque}\n\n${historialAnterior}`
+      : nuevoBloque;
+
+    delete payload.NuevoComentario;
+
+    await window.database.ref(`Registros/${key}`).set(payload);
+
+    if (responsableCambio) {
+      try {
+        await this.enviarMensajeAsignacion({
+          proyectoId: payload.ID,
+          proyecto: payload.Proyecto,
+          responsable: nuevoResponsable,
+          detallesAdicionales: comentarioNuevo || "Reasignación de responsable"
+        });
+      } catch (err) {
+        console.error("No se pudo enviar el mensaje interno de reasignación:", err);
+      }
+    }
+
+    const idx = this.all.findIndex((x) => x._firebaseKey === key);
+    const normalized = window.Utils.normalizarRegistro(key, payload);
+
+    if (idx >= 0) {
+      this.all[idx] = normalized;
+      this.ordenarLista(this.all);
+    }
+
+    this.aplicarFiltros(window.UI.getFilters());
+    return normalized;
   },
 
   async crearNuevo(datos) {

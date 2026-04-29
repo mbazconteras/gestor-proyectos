@@ -126,8 +126,8 @@ window.UI = {
     const currentCliente = clienteSel.value;
     const currentResp = respSel.value;
 
-    clienteSel.innerHTML = `<option value="">Todos</option>`;
-    respSel.innerHTML = `<option value="">Todos</option>`;
+    clienteSel.innerHTML = `<option value="">Cliente</option>`;
+    respSel.innerHTML = `<option value="">Responsable</option>`;
 
     window.Proyectos.getClientesUnicos().forEach((x) => {
       clienteSel.innerHTML += `<option value="${window.Utils.escapeHtml(x)}">${window.Utils.escapeHtml(x)}</option>`;
@@ -162,6 +162,27 @@ window.UI = {
 
     clienteSel.value = currentCliente;
     respSel.value = currentResp;
+  },
+
+  renderResponsableDetalleOptions(valorActual = "") {
+    const sel = document.getElementById("fieldNombre");
+    if (!sel) return;
+
+    const actual = window.Utils.normalizarTexto(valorActual);
+    const responsables = window.Proyectos.catalogoResponsables || [];
+
+    sel.innerHTML = `<option value="">Selecciona un responsable</option>`;
+
+    responsables.forEach((x) => {
+      sel.innerHTML += `<option value="${window.Utils.escapeHtml(x)}">${window.Utils.escapeHtml(x)}</option>`;
+    });
+
+    if (actual && !responsables.includes(actual)) {
+      sel.innerHTML += `<option value="${window.Utils.escapeHtml(actual)}">${window.Utils.escapeHtml(actual)}</option>`;
+    }
+
+    sel.value = actual;
+    sel.disabled = !window.Auth.currentUser?.administrador;
   },
 
   renderKPIs(rows) {
@@ -301,7 +322,6 @@ window.UI = {
       const metaEl = document.createElement("div");
       metaEl.className = "history-meta";
       metaEl.textContent = meta;
-
       card.appendChild(metaEl);
 
       if (body) {
@@ -347,7 +367,7 @@ window.UI = {
     setValue("fieldProyecto", registro.Proyecto);
     setValue("fieldCliente", registro.Cliente);
     setValue("fieldPO", registro.PO);
-    setValue("fieldNombre", registro.Nombre);
+    this.renderResponsableDetalleOptions(registro.Nombre);
     setValue("fieldLink", registro.Link);
 
     const entregaInfo = this.parseEntregaDetalle(registro.Entregado, registro.FechaEntrega);
