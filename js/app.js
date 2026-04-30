@@ -134,6 +134,26 @@ window.App = {
       console.error(err);
       window.UI.setNewProjectMessage(err.message || "No fue posible crear el proyecto.", "error");
     }
+  },
+
+  async handleCrearCliente() {
+    window.UI.setNewClientMessage("", "");
+    try {
+      const nombre = window.UI.getNewClientForm();
+
+      if (!window.Utils.normalizarTexto(nombre)) {
+        throw new Error("Debes capturar el nombre del cliente.");
+      }
+
+      await window.Proyectos.crearNuevoCliente(nombre);
+      window.UI.setNewClientMessage("Cliente creado correctamente.", "success");
+      window.UI.renderFilterOptions();
+      window.UI.renderNewProjectOptions();
+      window.UI.closeNewClientModal();
+    } catch (err) {
+      console.error(err);
+      window.UI.setNewClientMessage(err.message || "No fue posible crear el cliente.", "error");
+    }
   }
 };
 

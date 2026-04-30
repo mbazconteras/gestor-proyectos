@@ -14,11 +14,15 @@ window.UI = {
     this.els.sessionBadge = document.getElementById("sessionBadge");
     this.els.todayBadge = document.getElementById("todayBadge");
     this.els.btnNuevoProyecto = document.getElementById("btnNuevoProyecto");
+    this.els.btnNuevoCliente = document.getElementById("btnNuevoCliente");
     this.els.saveMessage = document.getElementById("saveMessage");
     this.els.stepsContainer = document.getElementById("stepsContainer");
 
     this.els.modalNuevoProyecto = document.getElementById("modalNuevoProyecto");
     this.els.newProjectMessage = document.getElementById("newProjectMessage");
+
+    this.els.modalNuevoCliente = document.getElementById("modalNuevoCliente");
+    this.els.newClientMessage = document.getElementById("newClientMessage");
 
     this.bindEvents();
     this.renderToday();
@@ -32,8 +36,11 @@ window.UI = {
     const btnGuardarProyecto = byId("btnGuardarProyecto");
     const btnDescargarQR = byId("btnDescargarQR");
     const btnNuevoProyecto = byId("btnNuevoProyecto");
+    const btnNuevoCliente = byId("btnNuevoCliente");
     const btnCerrarModalNuevo = byId("btnCerrarModalNuevo");
     const btnCrearProyecto = byId("btnCrearProyecto");
+    const btnCerrarModalCliente = byId("btnCerrarModalCliente");
+    const btnCrearCliente = byId("btnCrearCliente");
     const btnAbrirAdjunto = byId("btnAbrirAdjunto");
     const thSortID = byId("thSortID");
 
@@ -42,8 +49,11 @@ window.UI = {
     if (btnGuardarProyecto) btnGuardarProyecto.addEventListener("click", window.App.handleGuardarProyecto);
     if (btnDescargarQR) btnDescargarQR.addEventListener("click", window.App.handleDescargarQR);
     if (btnNuevoProyecto) btnNuevoProyecto.addEventListener("click", () => this.openNewModal());
+    if (btnNuevoCliente) btnNuevoCliente.addEventListener("click", () => this.openNewClientModal());
     if (btnCerrarModalNuevo) btnCerrarModalNuevo.addEventListener("click", () => this.closeNewModal());
     if (btnCrearProyecto) btnCrearProyecto.addEventListener("click", window.App.handleCrearProyecto);
+    if (btnCerrarModalCliente) btnCerrarModalCliente.addEventListener("click", () => this.closeNewClientModal());
+    if (btnCrearCliente) btnCrearCliente.addEventListener("click", window.App.handleCrearCliente);
     if (btnAbrirAdjunto) btnAbrirAdjunto.addEventListener("click", this.abrirAdjunto);
     if (thSortID) thSortID.addEventListener("click", window.App.toggleSortById);
 
@@ -58,6 +68,12 @@ window.UI = {
     if (this.els.modalNuevoProyecto) {
       this.els.modalNuevoProyecto.addEventListener("click", (e) => {
         if (e.target === this.els.modalNuevoProyecto) this.closeNewModal();
+      });
+    }
+
+    if (this.els.modalNuevoCliente) {
+      this.els.modalNuevoCliente.addEventListener("click", (e) => {
+        if (e.target === this.els.modalNuevoCliente) this.closeNewClientModal();
       });
     }
   },
@@ -98,6 +114,9 @@ window.UI = {
     if (this.els.btnNuevoProyecto) {
       this.els.btnNuevoProyecto.classList.toggle("hidden", !user?.administrador);
     }
+    if (this.els.btnNuevoCliente) {
+      this.els.btnNuevoCliente.classList.toggle("hidden", !user?.administrador);
+    }
   },
 
   setLoginMessage(text, type = "") {
@@ -116,6 +135,12 @@ window.UI = {
     if (!this.els.newProjectMessage) return;
     this.els.newProjectMessage.textContent = text || "";
     this.els.newProjectMessage.className = `message ${type}`.trim();
+  },
+
+  setNewClientMessage(text, type = "") {
+    if (!this.els.newClientMessage) return;
+    this.els.newClientMessage.textContent = text || "";
+    this.els.newClientMessage.className = `message ${type}`.trim();
   },
 
   renderFilterOptions() {
@@ -486,6 +511,17 @@ window.UI = {
     this.els.modalNuevoProyecto.classList.add("hidden");
   },
 
+  openNewClientModal() {
+    if (!this.els.modalNuevoCliente) return;
+    this.clearNewClientForm();
+    this.els.modalNuevoCliente.classList.remove("hidden");
+  },
+
+  closeNewClientModal() {
+    if (!this.els.modalNuevoCliente) return;
+    this.els.modalNuevoCliente.classList.add("hidden");
+  },
+
   clearNewProjectForm(resetId = true) {
     const set = (id, value = "") => {
       const el = document.getElementById(id);
@@ -505,6 +541,12 @@ window.UI = {
     this.setNewProjectMessage("", "");
   },
 
+  clearNewClientForm() {
+    const el = document.getElementById("nuevoClienteNombre");
+    if (el) el.value = "";
+    this.setNewClientMessage("", "");
+  },
+
   getNewProjectForm() {
     const get = (id) => document.getElementById(id)?.value || "";
 
@@ -516,5 +558,9 @@ window.UI = {
       Nombre: get("nuevoResponsable"),
       Historial: get("nuevoHistorial")
     };
+  },
+
+  getNewClientForm() {
+    return document.getElementById("nuevoClienteNombre")?.value || "";
   }
 };

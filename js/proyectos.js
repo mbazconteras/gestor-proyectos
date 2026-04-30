@@ -136,32 +136,30 @@ window.Proyectos = {
     return this.getByKey(key);
   },
 
-  async enviarMensajeAsignacion({ proyectoId, proyecto, responsable, detallesAdicionales }) {
-    const fromUser = window.Utils.normalizarTexto(window.Auth.currentUser?.usuario || "");
-    const toUser = window.Utils.normalizarTexto(responsable || "");
-
-    if (!fromUser || !toUser) {
-      console.warn("No se envió mensaje interno: faltan _From o _To.");
-      return;
+  async crearNuevoCliente(nombreCliente) {
+    if (!window.Auth.currentUser?.administrador) {
+      throw new Error("Solo un administrador puede crear clientes.");
     }
 
-    const msgId = String(Date.now());
-    const detalles = window.Utils.normalizarTexto(detallesAdicionales);
+    const nuevo = window.Utils.normalizarTexto(nombreCliente);
+    if (!nuevo) {
+      throw new Error("Debes capturar el nombre del cliente.");
+    }
 
-    const body =
-      `Se te asignó el proyecto ID: ${proyectoId}\n\n` +
-      `Proyecto: ${window.Utils.normalizarTexto(proyecto)}\n\n` +
-      `Detalles adicionales:\n${detalles || "Sin detalles adicionales"}\n\n` +
-      `Puede ir al gestor de proyectos y revisar y actualizar los detalles de avance.`;
+    const snap = await window.databaseClientes.ref("QEHSClients").once("value");
+    const actuales = snap.val() || {};
+    const existe = Object.keys(actuales).some(
+      (key) => window.Utils.normalizarTexto(key).toLowerCase() === nuevo.toLowerCase()
+    );
 
-    const payload = {
-      ID: msgId,
-      _From: fromUser,
-      _To: toUser,
-      _Body: body
-    };
+    if (existe) {
+      throw new Error("Ese cliente ya existe en la lista.");
+    }
 
-    await window.database.ref(`CalCenter/${msgId}`).set(payload);
+    await window.databaseClientes.ref(`QEHSClients/${nuevo}`).set("");
+
+    await this.cargarCatalogos();
+    return nuevo;
   },
 
   async guardarDesdeFormulario(registroEditado) {
@@ -247,6 +245,34 @@ window.Proyectos = {
 
     this.aplicarFiltros(window.UI.getFilters());
     return normalized;
+  },
+
+  async enviarMensajeAsignacion({ proyectoId, proyecto, responsable, detallesAdicionales }) {
+    const fromUser = window.Utils.normalizarTexto(window.Auth.currentUser?.usuario || "");
+    const toUser = window.Utils.normalizarTexto(responsable || "");
+
+    if (!fromUser || !toUser) {
+      console.warn("No se envió mensaje interno: faltan _From o _To.");
+      return;
+    }
+
+    const msgId = String(Date.now());
+    const detalles = window.Utils.normalizarTexto(detallesAdicionales);
+
+    const body =
+      `Se te asignó el proyecto ID: ${proyectoId}\n\n` +
+      `Proyecto: ${window.Utils.normalizarTexto(proyecto)}\n\n` +
+      `Detalles adicionales:\n${detalles || "Sin detalles adicionales"}\n\n` +
+      `Puede ir al gestor de proyectos y revisar y actualizar los detalles de avance.`;
+
+    const payload = {
+      ID: msgId,
+      _From: fromUser,
+      _To: toUser,
+      _Body: body
+    };
+
+    await window.database.ref(`CalCenter/${msgId}`).set(payload);
   },
 
   async crearNuevo(datos) {
