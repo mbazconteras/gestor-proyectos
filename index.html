@@ -65,6 +65,7 @@
 
         <div class="topbar-right">
           <button id="btnNuevoProyecto" class="btn btn-primary hidden">Nuevo proyecto</button>
+          <button id="btnNuevoCliente" class="btn btn-secondary hidden">Nuevo cliente</button>
           <button id="btnLogout" class="btn btn-secondary">Cerrar sesión</button>
         </div>
       </header>
@@ -399,6 +400,33 @@
 
       <div class="modal-footer">
         <button id="btnCrearProyecto" class="btn btn-primary">Crear proyecto</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL NUEVO CLIENTE -->
+  <div id="modalNuevoCliente" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Nuevo cliente</h3>
+        <button id="btnCerrarModalCliente" class="icon-btn" type="button">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="nuevoClienteNombre">Nombre del cliente</label>
+          <input
+            type="text"
+            id="nuevoClienteNombre"
+            placeholder="Escribe el nombre del nuevo cliente"
+          />
+        </div>
+
+        <div id="newClientMessage" class="message"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btnCrearCliente" class="btn btn-primary">Guardar cliente</button>
       </div>
     </div>
   </div>
