@@ -64,8 +64,16 @@
         </div>
 
         <div class="topbar-right">
+          <a
+            id="btnPanelRevision"
+            class="btn btn-secondary"
+            href="https://mbazconteras.github.io/revision-estudios/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Panel de Revisión</a>
           <button id="btnNuevoProyecto" class="btn btn-primary hidden">Nuevo proyecto</button>
           <button id="btnNuevoCliente" class="btn btn-secondary hidden">Nuevo cliente</button>
+          <button id="btnEliminarCliente" class="btn btn-secondary hidden">Eliminar cliente</button>
           <button id="btnLogout" class="btn btn-secondary">Cerrar sesión</button>
         </div>
       </header>
@@ -427,6 +435,31 @@
 
       <div class="modal-footer">
         <button id="btnCrearCliente" class="btn btn-primary">Guardar cliente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ELIMINAR CLIENTE -->
+  <div id="modalEliminarCliente" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Eliminar cliente</h3>
+        <button id="btnCerrarModalEliminarCliente" class="icon-btn" type="button">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="clienteEliminarSelect">Cliente</label>
+          <select id="clienteEliminarSelect">
+            <option value="">Selecciona un cliente</option>
+          </select>
+        </div>
+
+        <div id="deleteClientMessage" class="message"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btnEliminarClienteConfirmar" class="btn btn-primary">Eliminar cliente</button>
       </div>
     </div>
   </div>
