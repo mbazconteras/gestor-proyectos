@@ -149,10 +149,41 @@ window.App = {
       window.UI.setNewClientMessage("Cliente creado correctamente.", "success");
       window.UI.renderFilterOptions();
       window.UI.renderNewProjectOptions();
+      window.UI.renderDeleteClientOptions();
       window.UI.closeNewClientModal();
     } catch (err) {
       console.error(err);
       window.UI.setNewClientMessage(err.message || "No fue posible crear el cliente.", "error");
+    }
+  },
+
+  async handleEliminarCliente() {
+    window.UI.setDeleteClientMessage("", "");
+    try {
+      const nombre = window.UI.getDeleteClientForm();
+
+      if (!window.Utils.normalizarTexto(nombre)) {
+        throw new Error("Debes seleccionar un cliente.");
+      }
+
+      const confirmar = window.confirm(
+        `¿Deseas eliminar el cliente "${nombre}" del catálogo?\n\n` +
+        "Seguirá apareciendo en proyectos ya existentes, pero dejará de estar disponible en las listas."
+      );
+
+      if (!confirmar) {
+        throw new Error("Eliminación cancelada.");
+      }
+
+      await window.Proyectos.eliminarCliente(nombre);
+      window.UI.setDeleteClientMessage("Cliente eliminado correctamente.", "success");
+      window.UI.renderFilterOptions();
+      window.UI.renderNewProjectOptions();
+      window.UI.renderDeleteClientOptions();
+      window.UI.closeDeleteClientModal();
+    } catch (err) {
+      console.error(err);
+      window.UI.setDeleteClientMessage(err.message || "No fue posible eliminar el cliente.", "error");
     }
   }
 };

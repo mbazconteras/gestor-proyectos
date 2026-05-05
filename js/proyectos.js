@@ -157,9 +157,37 @@ window.Proyectos = {
     }
 
     await window.databaseClientes.ref(`QEHSClients/${nuevo}`).set("");
-
     await this.cargarCatalogos();
     return nuevo;
+  },
+
+  async eliminarCliente(nombreCliente) {
+    if (!window.Auth.currentUser?.administrador) {
+      throw new Error("Solo un administrador puede eliminar clientes.");
+    }
+
+    const nombre = window.Utils.normalizarTexto(nombreCliente);
+    if (!nombre) {
+      throw new Error("Debes seleccionar un cliente.");
+    }
+
+    const snap = await window.databaseClientes.ref("QEHSClients").once("value");
+    const actuales = snap.val() || {};
+
+    let keyExacta = null;
+    Object.keys(actuales).forEach((key) => {
+      if (window.Utils.normalizarTexto(key).toLowerCase() === nombre.toLowerCase()) {
+        keyExacta = key;
+      }
+    });
+
+    if (!keyExacta) {
+      throw new Error("No se encontró el cliente en el catálogo.");
+    }
+
+    await window.databaseClientes.ref(`QEHSClients/${keyExacta}`).remove();
+    await this.cargarCatalogos();
+    return keyExacta;
   },
 
   async guardarDesdeFormulario(registroEditado) {
