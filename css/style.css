@@ -255,6 +255,8 @@ textarea {
 .topbar-right {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 /* LAYOUT IZQ / DER */
@@ -1117,4 +1119,42 @@ textarea {
   .compact-kpis {
     grid-template-columns: repeat(2, minmax(100px, 1fr));
   }
+}
+#modalNuevoServicioExterno .modal-card,
+#modalNuevoProveedorExterno .modal-card {
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#modalNuevoServicioExterno .modal-body,
+#modalNuevoProveedorExterno .modal-body {
+  overflow-y: auto;
+  max-height: calc(92vh - 140px);
+}
+#modalNuevoServicioExterno .modal-footer,
+#modalNuevoProveedorExterno .modal-footer {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  z-index: 2;
+}
+
+
+/* Detalles de entrega editables */
+.delivery-note {
+  grid-column: 1 / -1;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px dashed #f0b36a;
+  color: #7c4a03;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.section-entrega input,
+.section-entrega textarea {
+  background: #ffffff;
 }
