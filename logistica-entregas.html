@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ProjectHub | Logística y Entregas</title>
+  <link rel="stylesheet" href="css/logistica-entregas.css" />
+</head>
+<body>
+  <div id="loginView" class="view active">
+    <section class="login-card">
+      <div class="brand-block">
+        <div class="brand-icon">PH</div>
+        <div>
+          <h1>Logística / Entregas</h1>
+          <p>Acceso con usuario de ProjectHub</p>
+        </div>
+      </div>
+
+      <label>Usuario</label>
+      <input id="loginUsuario" type="text" placeholder="Usuario" autocomplete="username" />
+
+      <label>Contraseña</label>
+      <input id="loginPassword" type="password" placeholder="Contraseña" autocomplete="current-password" />
+
+      <button id="btnLogin" class="btn primary full">Entrar</button>
+      <div id="loginMessage" class="message"></div>
+    </section>
+  </div>
+
+  <div id="mainView" class="view">
+    <header class="topbar">
+      <div>
+        <h1>Logística / Entregas</h1>
+        <p>Bolsa inteligente de paquetes, viajes y oportunidades logísticas.</p>
+      </div>
+      <div class="session-actions">
+        <span id="sessionBadge" class="badge"></span>
+        <button id="btnReload" class="btn ghost">Actualizar</button>
+        <button id="btnLogout" class="btn danger-outline">Salir</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="kpi-grid">
+        <article class="kpi-card">
+          <span>Paquetes pendientes</span>
+          <strong id="kpiPendientes">0</strong>
+        </article>
+        <article class="kpi-card">
+          <span>Urgentes / alta</span>
+          <strong id="kpiUrgentes">0</strong>
+        </article>
+        <article class="kpi-card">
+          <span>Viajes programados</span>
+          <strong id="kpiViajes">0</strong>
+        </article>
+        <article class="kpi-card">
+          <span>Entregados</span>
+          <strong id="kpiEntregados">0</strong>
+        </article>
+      </section>
+
+      <section class="content-grid">
+        <aside class="panel side-panel">
+          <div class="panel-title-row">
+            <h2>Nuevo paquete</h2>
+          </div>
+
+          <label>Proyecto relacionado</label>
+          <div class="search-field">
+            <input id="paqueteProyectoSearch" type="text" placeholder="Buscar por ID, proyecto, cliente o PO" autocomplete="off" />
+            <input id="paqueteProyectoKey" type="hidden" />
+            <div id="paqueteProyectoResults" class="search-results hidden"></div>
+          </div>
+          <div id="paqueteProyectoSeleccionado" class="selected-project small-muted">Sin proyecto relacionado.</div>
+
+          <label>Planta destino</label>
+          <select id="paquetePlanta"></select>
+
+          <div class="readonly-box" id="paquetePlantaInfo">Selecciona una planta.</div>
+
+          <label>Tipo</label>
+          <select id="paqueteTipo">
+            <option value="Documentos">Documentos</option>
+            <option value="Carpeta">Carpeta</option>
+            <option value="Caja">Caja</option>
+            <option value="Muestra">Muestra</option>
+            <option value="Otro">Otro</option>
+          </select>
+
+          <div class="two-cols">
+            <div>
+              <label>Prioridad</label>
+              <select id="paquetePrioridad">
+                <option value="Normal">Normal</option>
+                <option value="Alta">Alta</option>
+                <option value="Urgente">Urgente</option>
+              </select>
+            </div>
+            <div>
+              <label>Fecha límite</label>
+              <input id="paqueteFechaLimite" type="date" />
+            </div>
+          </div>
+
+          <label>Observaciones</label>
+          <textarea id="paqueteObservaciones" rows="3" placeholder="Ej. Entregar en recepción, solicitar sello. La evidencia se gestiona en Delivery."></textarea>
+
+
+          <button id="btnCrearPaquete" class="btn primary full">Crear paquete</button>
+          <div id="paqueteMessage" class="message"></div>
+        </aside>
+
+        <section class="panel main-panel">
+          <div class="tabs">
+            <button class="tab active" data-tab="paquetesTab">Paquetes</button>
+            <button class="tab" data-tab="viajesTab">Viajes</button>
+            <button class="tab" data-tab="oportunidadesTab">Oportunidades</button>
+            <button class="tab" data-tab="nuevoViajeTab">Nuevo viaje</button>
+            <button class="tab admin-only" data-tab="plantasTab">Catálogo plantas</button>
+            <button class="tab admin-only" data-tab="configTab">Configuración</button>
+          </div>
+
+          <section id="paquetesTab" class="tab-panel active">
+            <div class="panel-title-row">
+              <h2>Bolsa de paquetes</h2>
+              <div class="filters-inline">
+                <input id="filterPaquetes" type="text" placeholder="Buscar cliente, planta, proyecto..." />
+                <select id="filterEstadoPaquete">
+                  <option value="">Todos</option>
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Asignado a viaje">Asignado a viaje</option>
+                  <option value="En ruta">En ruta</option>
+                  <option value="Entregado">Entregado</option>
+                  <option value="No entregado">No entregado</option>
+                  <option value="Cancelado">Cancelado</option>
+                </select>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Proyecto</th>
+                    <th>Cliente / Planta</th>
+                    <th>Zona</th>
+                    <th>Prioridad</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody id="paquetesTableBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="viajesTab" class="tab-panel">
+            <div class="panel-title-row">
+              <h2>Viajes programados</h2>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Usuario</th>
+                    <th>Destino</th>
+                    <th>Zona</th>
+                    <th>Paquetes</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody id="viajesTableBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="oportunidadesTab" class="tab-panel">
+            <div class="panel-title-row">
+              <h2>Oportunidades detectadas</h2>
+              <button id="btnDetectarOportunidades" class="btn ghost">Detectar ahora</button>
+            </div>
+            <div id="oportunidadesContainer" class="opportunity-grid"></div>
+          </section>
+
+          <section id="nuevoViajeTab" class="tab-panel">
+            <div class="form-grid">
+              <div>
+                <h2>Nuevo viaje</h2>
+                <label>Fecha</label>
+                <input id="viajeFecha" type="date" />
+
+                <label>Hora</label>
+                <input id="viajeHora" type="time" value="09:00" />
+
+                <label>Usuario que viaja</label>
+                <select id="viajeUsuario"></select>
+
+                <label>Destino principal</label>
+                <select id="viajePlanta"></select>
+
+                <div class="readonly-box" id="viajePlantaInfo">Selecciona una planta.</div>
+
+                <label>Observaciones</label>
+                <textarea id="viajeObservaciones" rows="3" placeholder="Motivo del viaje, restricciones, horarios..."></textarea>
+
+                <div class="small-muted auto-sugerencias-note">Las sugerencias se actualizan automáticamente al seleccionar o cambiar el destino.</div>
+                <button id="btnCrearViaje" class="btn primary full">Crear viaje con seleccionados</button>
+                <div id="viajeMessage" class="message"></div>
+              </div>
+
+              <div>
+                <h2>Paquetes sugeridos</h2>
+                <div class="table-wrap suggestions-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th></th>
+                        <th>Paquete</th>
+                        <th>Destino</th>
+                        <th>Score</th>
+                        <th>Recomendación</th>
+                      </tr>
+                    </thead>
+                    <tbody id="sugerenciasTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="plantasTab" class="tab-panel">
+            <div class="panel-title-row">
+              <div>
+                <h2>Catálogo de plantas</h2>
+                <p class="small-muted">Mantenimiento de ubicaciones. Las zonas logísticas son controladas por el sistema.</p>
+              </div>
+              <button id="btnNuevaPlanta" class="btn primary">Nueva planta</button>
+            </div>
+            <div class="config-card">
+              <strong>Punto de salida:</strong> <span id="origenNombre">Origen Oficina</span>
+              <span class="small-muted"> · Coordenadas: <span id="origenCoords">20.622975, -100.392190</span></span>
+              <button id="btnRutaOrigenMaps" class="btn ghost compact">Abrir origen</button>
+            </div>
+            <div class="filters-inline plant-filters">
+              <input id="filterPlantas" type="text" placeholder="Buscar cliente, planta o dirección..." />
+              <select id="filterPlantasEstado">
+                <option value="activas">Activas</option>
+                <option value="todas">Todas</option>
+                <option value="sin_maps">Sin URL Maps</option>
+                <option value="sin_coords">Sin coordenadas</option>
+                <option value="sin_validar">Coordenadas sin validar</option>
+                <option value="inactivas">Inactivas</option>
+              </select>
+              <button id="btnExtraerTodasCoords" class="btn ghost">Extraer coordenadas de URLs</button>
+            </div>
+            <div class="table-wrap plantas-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Cliente / Planta</th>
+                    <th>Dirección</th>
+                    <th>Zona</th>
+                    <th>Maps</th>
+                    <th>Coordenadas</th>
+                    <th>Activo</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody id="plantasTableBody"></tbody>
+              </table>
+            </div>
+            <div id="plantasMessage" class="message"></div>
+          </section>
+
+          <section id="configTab" class="tab-panel admin-only">
+            <div class="panel-title-row">
+              <div>
+                <h2>Configuración logística</h2>
+                <p class="small-muted">Configura el envío de mensajes internos a CalCenter. Los paquetes, viajes e historial se siguen guardando aunque las notificaciones estén apagadas.</p>
+              </div>
+            </div>
+            <div class="config-card config-notificaciones-card">
+              <h3>Notificaciones CalCenter</h3>
+              <label class="check-row"><input id="cfgCalCenterActivo" type="checkbox" /> Enviar mensajes a CalCenter</label>
+              <label class="check-row"><input id="cfgNotifCreacionPaquete" type="checkbox" /> Notificar creación de paquete</label>
+              <label class="check-row"><input id="cfgNotifAsignacionViaje" type="checkbox" /> Notificar asignación de paquetes a viaje</label>
+              <label class="check-row"><input id="cfgNotifEntregaPaquete" type="checkbox" /> Notificar entrega de paquete</label>
+              <label class="check-row"><input id="cfgNotifNoEntregado" type="checkbox" /> Notificar paquete no entregado</label>
+              <div class="small-muted config-help">Recomendación inicial: activar CalCenter y asignación a viaje; dejar apagada creación y entrega para evitar exceso de mensajes.</div>
+              <button id="btnGuardarConfigNotificaciones" class="btn primary">Guardar configuración</button>
+              <div id="configNotificacionesMessage" class="message"></div>
+            </div>
+          </section>
+
+
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div id="modalEntrega" class="modal hidden">
+    <div class="modal-card">
+      <div class="panel-title-row">
+        <h2>Confirmar entrega</h2>
+        <button id="btnCerrarEntrega" class="icon-btn">×</button>
+      </div>
+      <input id="entregaPaqueteId" type="hidden" />
+      <label>Entregado por</label>
+      <input id="entregaEntregadoPor" type="text" />
+      <label>Recibido por</label>
+      <input id="entregaRecibidoPor" type="text" placeholder="Nombre de quien recibe" />
+      <label>Observaciones</label>
+      <textarea id="entregaObservaciones" rows="4" placeholder="Ej. Se entrega en recepción, con sello..."></textarea>
+      <button id="btnConfirmarEntrega" class="btn primary full">Confirmar entrega</button>
+      <div id="entregaMessage" class="message"></div>
+    </div>
+  </div>
+
+
+  <div id="modalPlanta" class="modal hidden">
+    <div class="modal-card planta-modal-card">
+      <div class="panel-title-row">
+        <h2 id="modalPlantaTitle">Editar planta</h2>
+        <button id="btnCerrarPlanta" class="icon-btn">×</button>
+      </div>
+      <input id="plantaEditKey" type="hidden" />
+      <div class="form-grid planta-form-grid">
+        <div>
+          <label>Cliente</label>
+          <input id="plantaCliente" type="text" />
+          <label>Planta</label>
+          <input id="plantaNombre" type="text" />
+          <label>Dirección</label>
+          <textarea id="plantaDireccion" rows="3"></textarea>
+          <label>Código postal</label>
+          <input id="plantaCP" type="text" />
+          <label>Google Maps URL</label>
+          <textarea id="plantaMapsUrl" rows="3" placeholder="Pega aquí la URL expandida de Google Maps"></textarea>
+          <div class="row-actions form-actions-left">
+            <button id="btnExtraerCoordsPlanta" class="btn ghost" type="button">Extraer coordenadas desde URL</button>
+            <button id="btnAbrirMapsPlanta" class="btn ghost" type="button">Abrir Maps</button>
+            <button id="btnRutaPlantaOrigen" class="btn ghost" type="button">Ruta desde oficina</button>
+          </div>
+        </div>
+        <div>
+          <div class="readonly-box">
+            <strong>Campos controlados por el sistema</strong><br>
+            Zona logística: <span id="plantaZonaReadonly">—</span><br>
+            Subzona: <span id="plantaSubzonaReadonly">—</span><br>
+            Grupo ruta: <span id="plantaGrupoReadonly">—</span>
+          </div>
+          <div class="two-cols">
+            <div>
+              <label>Latitud</label>
+              <input id="plantaLat" type="number" step="any" />
+            </div>
+            <div>
+              <label>Longitud</label>
+              <input id="plantaLng" type="number" step="any" />
+            </div>
+          </div>
+          <label class="check-row"><input id="plantaCoordValidada" type="checkbox" /> Coordenada validada</label>
+          <label>Contacto / recepción</label>
+          <input id="plantaContacto" type="text" />
+          <label>Horario de recepción</label>
+          <input id="plantaHorario" type="text" placeholder="Ej. L-V 8:00 a 16:00" />
+          <label class="check-row"><input id="plantaRequiereCita" type="checkbox" /> Requiere cita</label>
+          <label>Observaciones de acceso</label>
+          <textarea id="plantaObsAcceso" rows="3"></textarea>
+          <label>Observaciones generales</label>
+          <textarea id="plantaObservaciones" rows="2"></textarea>
+          <label class="check-row"><input id="plantaActivo" type="checkbox" checked /> Planta activa</label>
+        </div>
+      </div>
+      <button id="btnGuardarPlanta" class="btn primary full">Guardar planta</button>
+      <div id="plantaMessage" class="message"></div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/logistica-entregas.js"></script>
+</body>
+</html>

@@ -64,18 +64,33 @@
         </div>
 
         <div class="topbar-right">
-          <a
-            id="btnPanelRevision"
-            class="btn btn-secondary"
-            href="https://mbazconteras.github.io/revision-estudios/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >Panel de Revisión</a>
-          <button id="btnNuevoProyecto" class="btn btn-primary hidden">Nuevo proyecto</button>
-          <button id="btnNuevoCliente" class="btn btn-secondary hidden">Nuevo cliente</button>
-          <button id="btnEliminarCliente" class="btn btn-secondary hidden">Eliminar cliente</button>
-          <button id="btnLogout" class="btn btn-secondary">Cerrar sesión</button>
-        </div>
+  <a
+    id="btnServiciosExternos"
+    class="btn btn-secondary"
+    href="servicios-externos.html"
+  >Servicios Externos</a>
+
+  <a
+    id="btnLogisticaEntregas"
+    class="btn btn-secondary"
+    href="logistica-entregas.html"
+    target="_blank"
+    rel="noopener noreferrer"
+  >Logística / Entregas</a>
+
+  <a
+    id="btnPanelRevision"
+    class="btn btn-secondary"
+    href="https://mbazconteras.github.io/revision-estudios/"
+    target="_blank"
+    rel="noopener noreferrer"
+  >Panel de Revisión</a>
+
+  <button id="btnNuevoProyecto" class="btn btn-primary hidden">Nuevo proyecto</button>
+  <button id="btnNuevoCliente" class="btn btn-secondary hidden">Nuevo cliente</button>
+  <button id="btnEliminarCliente" class="btn btn-secondary hidden">Eliminar cliente</button>
+  <button id="btnLogout" class="btn btn-secondary">Cerrar sesión</button>
+</div>
       </header>
 
       <main class="dashboard-layout">
@@ -279,25 +294,24 @@
                 <h4>Detalles de la entrega</h4>
               </div>
 
+              <div class="delivery-note">
+                Estos datos pueden venir de Delivery o capturarse manualmente. Al guardar, se actualiza el campo Entregado del proyecto.
+              </div>
+
               <div class="detail-grid">
                 <div class="form-group">
-                  <label for="fieldFechaEntrega">Fecha entrega</label>
-                  <input type="text" id="fieldFechaEntrega" disabled />
+                  <label for="fieldQuienEntrega">Quién entrega</label>
+                  <input type="text" id="fieldQuienEntrega" placeholder="Nombre de quien entrega" />
                 </div>
 
                 <div class="form-group">
-                  <label for="fieldQuienEntrega">Quien entrega</label>
-                  <input type="text" id="fieldQuienEntrega" disabled />
-                </div>
-
-                <div class="form-group">
-                  <label for="fieldQuienRecibe">Quien recibe</label>
-                  <input type="text" id="fieldQuienRecibe" disabled />
+                  <label for="fieldQuienRecibe">Quién recibe</label>
+                  <input type="text" id="fieldQuienRecibe" placeholder="Nombre de quien recibe" />
                 </div>
 
                 <div class="form-group full-width">
                   <label for="fieldObservacionesEntrega">Observaciones</label>
-                  <textarea id="fieldObservacionesEntrega" rows="3" disabled></textarea>
+                  <textarea id="fieldObservacionesEntrega" rows="3" placeholder="Ej. Entregado en recepción el 21 de agosto 2025"></textarea>
                 </div>
               </div>
             </div>
