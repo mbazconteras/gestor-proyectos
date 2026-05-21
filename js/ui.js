@@ -332,28 +332,13 @@ window.UI = {
     if (progressBar) progressBar.style.width = `${pct}%`;
   },
 
-  parseEntregaDetalle(entregadoRaw, fechaEntregaRaw) {
+  parseEntregaDetalle(entregadoRaw) {
     const parsed = window.Utils.parseCampoEntregado(entregadoRaw || "");
-    let observaciones = window.Utils.normalizarTexto(parsed.observaciones);
-    let fecha = window.Utils.normalizarFechaTexto(fechaEntregaRaw || "");
-
-    if (!fecha && observaciones) {
-      const match = observaciones.match(/\b(\d{2}[-\/]\d{2}[-\/]\d{4})\b/);
-      if (match) {
-        fecha = match[1];
-        observaciones = observaciones
-          .replace(match[1], "")
-          .replace(/\s{2,}/g, " ")
-          .replace(/^[-_,.;:\s]+|[-_,.;:\s]+$/g, "")
-          .trim();
-      }
-    }
 
     return {
       quienEntrega: parsed.quienEntrega || "",
       quienRecibe: parsed.quienRecibe || "",
-      observaciones,
-      fecha
+      observaciones: parsed.observaciones || ""
     };
   },
 
@@ -434,8 +419,7 @@ window.UI = {
     this.renderResponsableDetalleOptions(registro.Nombre);
     setValue("fieldLink", registro.Link);
 
-    const entregaInfo = this.parseEntregaDetalle(registro.Entregado, registro.FechaEntrega);
-    setValue("fieldFechaEntrega", entregaInfo.fecha);
+    const entregaInfo = this.parseEntregaDetalle(registro.Entregado);
     setValue("fieldQuienEntrega", entregaInfo.quienEntrega);
     setValue("fieldQuienRecibe", entregaInfo.quienRecibe);
     setValue("fieldObservacionesEntrega", entregaInfo.observaciones);
@@ -517,8 +501,18 @@ window.UI = {
     registro.PO = getValue("fieldPO");
     registro.Nombre = getValue("fieldNombre");
     registro.Link = getValue("fieldLink");
-    registro.Entregado = selected.Entregado || "";
-    registro.FechaEntrega = getValue("fieldFechaEntrega");
+
+    const quienEntrega = window.Utils.normalizarTexto(getValue("fieldQuienEntrega"));
+    const quienRecibe = window.Utils.normalizarTexto(getValue("fieldQuienRecibe"));
+    const observacionesEntrega = window.Utils.normalizarTexto(getValue("fieldObservacionesEntrega"));
+
+    registro.Entregado = (quienEntrega || quienRecibe || observacionesEntrega)
+      ? `${quienEntrega}_${quienRecibe}_${observacionesEntrega}`
+      : "";
+
+    // FechaEntrega se conserva como valor histórico, pero ya no se edita ni se muestra
+    // porque la fecha confiable suele venir dentro de Observaciones de Delivery.
+    registro.FechaEntrega = selected.FechaEntrega || "";
     registro.NuevoComentario = getValue("fieldNuevoComentario");
 
     for (let i = 1; i <= 12; i++) {
