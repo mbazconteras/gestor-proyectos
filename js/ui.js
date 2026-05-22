@@ -16,6 +16,8 @@ window.UI = {
     this.els.btnNuevoProyecto = document.getElementById("btnNuevoProyecto");
     this.els.btnNuevoCliente = document.getElementById("btnNuevoCliente");
     this.els.btnEliminarCliente = document.getElementById("btnEliminarCliente");
+    this.els.badgePanelRevision = document.getElementById("badgePanelRevision");
+    this.els.badgeLogisticaEntregas = document.getElementById("badgeLogisticaEntregas");
     this.els.saveMessage = document.getElementById("saveMessage");
     this.els.stepsContainer = document.getElementById("stepsContainer");
 
@@ -167,6 +169,70 @@ window.UI = {
     this.els.deleteClientMessage.textContent = text || "";
     this.els.deleteClientMessage.className = `message ${type}`.trim();
   },
+
+  formatBadgeCount(value) {
+    const num = Number(value || 0);
+    if (!num || num < 1) return "";
+    if (num > 99) return "99+";
+    return String(num);
+  },
+
+  setNavBadge(el, count) {
+    if (!el) return;
+    const txt = this.formatBadgeCount(count);
+    el.textContent = txt || "0";
+    el.classList.toggle("hidden", !txt);
+  },
+
+  async refreshNavBadges() {
+  try {
+    const [estudiosSnap, paquetesSnap] = await Promise.all([
+      window.database.ref("estudios").once("value"),
+      window.database.ref("paquetes").once("value")
+    ]);
+
+    const estudios = estudiosSnap.val() || {};
+    const paquetes = paquetesSnap.val() || {};
+
+    const normalizaEstado = (valor) => {
+      return String(valor || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+    };
+
+    let revisionCount = 0;
+    Object.keys(estudios).forEach((key) => {
+      const item = estudios[key] || {};
+      const estado = normalizaEstado(item.estado);
+
+      if (estado === "para revision" || estado === "corregido") {
+        revisionCount += 1;
+      }
+    });
+
+    let logisticaCount = 0;
+    Object.keys(paquetes).forEach((key) => {
+      const item = paquetes[key] || {};
+      const estado = normalizaEstado(item.estado);
+
+      if (estado === "pendiente") {
+        logisticaCount += 1;
+      }
+    });
+
+    console.log("Badge Panel Revision:", revisionCount);
+    console.log("Badge Logistica / Entregas:", logisticaCount);
+
+    this.setNavBadge(this.els.badgePanelRevision, revisionCount);
+    this.setNavBadge(this.els.badgeLogisticaEntregas, logisticaCount);
+  } catch (err) {
+    console.error("No se pudieron cargar los badges del menú:", err);
+    this.setNavBadge(this.els.badgePanelRevision, 0);
+    this.setNavBadge(this.els.badgeLogisticaEntregas, 0);
+  }
+},
 
   renderFilterOptions() {
     const clienteSel = document.getElementById("filterCliente");
@@ -510,8 +576,6 @@ window.UI = {
       ? `${quienEntrega}_${quienRecibe}_${observacionesEntrega}`
       : "";
 
-    // FechaEntrega se conserva como valor histórico, pero ya no se edita ni se muestra
-    // porque la fecha confiable suele venir dentro de Observaciones de Delivery.
     registro.FechaEntrega = selected.FechaEntrega || "";
     registro.NuevoComentario = getValue("fieldNuevoComentario");
 

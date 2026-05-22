@@ -33,6 +33,8 @@ window.App = {
     window.UI.showLogin();
     window.UI.showEmptyDetail();
     window.UI.setLoginMessage("", "");
+    window.UI.setNavBadge(window.UI.els.badgePanelRevision, 0);
+    window.UI.setNavBadge(window.UI.els.badgeLogisticaEntregas, 0);
     document.getElementById("loginPassword").value = "";
   },
 
@@ -42,6 +44,7 @@ window.App = {
       window.UI.renderFilterOptions();
       window.App.refreshFilters();
       window.UI.showEmptyDetail();
+      await window.UI.refreshNavBadges();
     } catch (err) {
       console.error("Error en cargarSistema:", err);
       alert("Error al cargar sistema: " + (err.message || err));
@@ -97,6 +100,7 @@ window.App = {
       window.UI.setSaveMessage("Proyecto guardado correctamente.", "success");
       window.App.refreshFilters();
       window.App.selectProject(guardado._firebaseKey);
+      await window.UI.refreshNavBadges();
     } catch (err) {
       console.error(err);
       window.UI.setSaveMessage(err.message || "No fue posible guardar.", "error");
@@ -130,6 +134,7 @@ window.App = {
       window.App.refreshFilters();
       window.UI.closeNewModal();
       window.App.selectProject(nuevo._firebaseKey);
+      await window.UI.refreshNavBadges();
     } catch (err) {
       console.error(err);
       window.UI.setNewProjectMessage(err.message || "No fue posible crear el proyecto.", "error");
