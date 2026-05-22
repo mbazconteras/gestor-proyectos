@@ -6,6 +6,37 @@
   <title>Gestor de Proyectos</title>
   <link rel="icon" href="data:," />
   <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .btn-with-badge {
+      position: relative;
+      overflow: visible;
+    }
+
+    .nav-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: #e53935;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .nav-badge.hidden {
+      display: none !important;
+    }
+  </style>
 </head>
 <body>
   <div id="app">
@@ -64,33 +95,39 @@
         </div>
 
         <div class="topbar-right">
-  <a
-    id="btnServiciosExternos"
-    class="btn btn-secondary"
-    href="servicios-externos.html"
-  >Servicios Externos</a>
+          <a
+            id="btnServiciosExternos"
+            class="btn btn-secondary"
+            href="servicios-externos.html"
+          >Servicios Externos</a>
 
-  <a
-    id="btnLogisticaEntregas"
-    class="btn btn-secondary"
-    href="logistica-entregas.html"
-    target="_blank"
-    rel="noopener noreferrer"
-  >Logística / Entregas</a>
+          <a
+            id="btnLogisticaEntregas"
+            class="btn btn-secondary btn-with-badge"
+            href="logistica-entregas.html"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Logística / Entregas
+            <span id="badgeLogisticaEntregas" class="nav-badge hidden">0</span>
+          </a>
 
-  <a
-    id="btnPanelRevision"
-    class="btn btn-secondary"
-    href="https://mbazconteras.github.io/revision-estudios/"
-    target="_blank"
-    rel="noopener noreferrer"
-  >Panel de Revisión</a>
+          <a
+            id="btnPanelRevision"
+            class="btn btn-secondary btn-with-badge"
+            href="https://mbazconteras.github.io/revision-estudios/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Panel de Revisión
+            <span id="badgePanelRevision" class="nav-badge hidden">0</span>
+          </a>
 
-  <button id="btnNuevoProyecto" class="btn btn-primary hidden">Nuevo proyecto</button>
-  <button id="btnNuevoCliente" class="btn btn-secondary hidden">Nuevo cliente</button>
-  <button id="btnEliminarCliente" class="btn btn-secondary hidden">Eliminar cliente</button>
-  <button id="btnLogout" class="btn btn-secondary">Cerrar sesión</button>
-</div>
+          <button id="btnNuevoProyecto" class="btn btn-primary hidden">Nuevo proyecto</button>
+          <button id="btnNuevoCliente" class="btn btn-secondary hidden">Nuevo cliente</button>
+          <button id="btnEliminarCliente" class="btn btn-secondary hidden">Eliminar cliente</button>
+          <button id="btnLogout" class="btn btn-secondary">Cerrar sesión</button>
+        </div>
       </header>
 
       <main class="dashboard-layout">
