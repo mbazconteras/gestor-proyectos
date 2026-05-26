@@ -35,6 +35,8 @@ window.App = {
     window.UI.setLoginMessage("", "");
     window.UI.setNavBadge(window.UI.els.badgePanelRevision, 0);
     window.UI.setNavBadge(window.UI.els.badgeLogisticaEntregas, 0);
+    window.UI.setNavBadge(window.UI.els.badgeCalCenter, 0);
+    window.UI.closeCalCenter();
     document.getElementById("loginPassword").value = "";
   },
 
@@ -104,6 +106,73 @@ window.App = {
     } catch (err) {
       console.error(err);
       window.UI.setSaveMessage(err.message || "No fue posible guardar.", "error");
+    }
+  },
+
+
+  async handleResponderCalCenter() {
+    window.UI.setCalCenterMessage("", "");
+    try {
+      const seleccionado = window.UI.getSelectedCalCenterMessage();
+      if (!seleccionado) {
+        throw new Error("Selecciona un mensaje.");
+      }
+
+      const respuesta = window.Utils.normalizarTexto(window.UI.els.calCenterReplyText?.value);
+      if (!respuesta) {
+        throw new Error("Escribe una respuesta.");
+      }
+
+      const usuarioActivo = window.Utils.normalizarTexto(window.Auth.currentUser?.usuario);
+      if (!usuarioActivo) {
+        throw new Error("No se identificó el usuario activo.");
+      }
+
+      const sello = window.Utils.formatDateStampNow();
+      const bloqueRespuesta = `${usuarioActivo} dice (${sello}):
+${respuesta}`;
+      const bodyActual = window.Utils.normalizarTexto(seleccionado._Body);
+      const nuevoBody = bodyActual ? `${bodyActual}
+
+${bloqueRespuesta}` : bloqueRespuesta;
+
+      const payload = {
+        ID: seleccionado.ID || seleccionado._firebaseKey,
+        _From: usuarioActivo,
+        _To: seleccionado._From,
+        _Body: nuevoBody
+      };
+
+      await window.database.ref(`CalCenter/${seleccionado._firebaseKey}`).set(payload);
+      await window.UI.refreshNavBadges();
+      await window.UI.refreshCalCenterInbox();
+      window.UI.setCalCenterMessage("Respuesta enviada correctamente.", "success");
+    } catch (err) {
+      console.error(err);
+      window.UI.setCalCenterMessage(err.message || "No fue posible responder.", "error");
+    }
+  },
+
+  async handleEliminarCalCenter() {
+    window.UI.setCalCenterMessage("", "");
+    try {
+      const seleccionado = window.UI.getSelectedCalCenterMessage();
+      if (!seleccionado) {
+        throw new Error("Selecciona un mensaje.");
+      }
+
+      const confirmar = window.confirm("¿Deseas eliminar este mensaje de CalCenter?");
+      if (!confirmar) {
+        throw new Error("Eliminación cancelada.");
+      }
+
+      await window.database.ref(`CalCenter/${seleccionado._firebaseKey}`).remove();
+      await window.UI.refreshNavBadges();
+      await window.UI.refreshCalCenterInbox();
+      window.UI.setCalCenterMessage("Mensaje eliminado correctamente.", "success");
+    } catch (err) {
+      console.error(err);
+      window.UI.setCalCenterMessage(err.message || "No fue posible eliminar el mensaje.", "error");
     }
   },
 

@@ -8,7 +8,7 @@ window.Logistica = {
   usuarios: [],
   configLogistica: {},
   sugerenciasActuales: [],
-  filters: { paquetes: "", estado: "" },
+  filters: { paquetes: "", estado: "Pendiente" },
   plantFilters: { search: "", estado: "activas" },
   selectedPlantaKey: "",
   realtimeActivo: false,
@@ -27,9 +27,9 @@ window.Logistica = {
     const ids = [
       "loginView", "mainView", "loginMessage", "loginUsuario", "loginPassword", "btnLogin", "btnLogout", "btnReload",
       "sessionBadge", "kpiPendientes", "kpiUrgentes", "kpiViajes", "kpiEntregados",
-      "paqueteProyectoSearch", "paqueteProyectoKey", "paqueteProyectoResults", "paqueteProyectoSeleccionado",
+      "paqueteProyectoSearch", "paqueteProyectoKey", "paqueteProyectoResults", "paqueteProyectoSeleccionado", "paqueteEditId", "paqueteFormTitle",
       "paquetePlanta", "paquetePlantaInfo", "paqueteTipo", "paquetePrioridad",
-      "paqueteFechaLimite", "paqueteObservaciones", "btnCrearPaquete", "paqueteMessage",
+      "paqueteFechaLimite", "paqueteObservaciones", "btnCrearPaquete", "btnCancelarEdicionPaquete", "paqueteMessage",
       "filterPaquetes", "filterEstadoPaquete", "paquetesTableBody", "viajesTableBody", "oportunidadesContainer",
       "btnDetectarOportunidades", "viajeFecha", "viajeHora", "viajeUsuario", "viajePlanta", "viajePlantaInfo",
       "viajeObservaciones", "btnCrearViaje", "viajeMessage", "sugerenciasTableBody",
@@ -51,6 +51,7 @@ window.Logistica = {
     if (this.els.btnLogout) this.els.btnLogout.addEventListener("click", () => this.handleLogout());
     if (this.els.btnReload) this.els.btnReload.addEventListener("click", () => this.recargarManual());
     if (this.els.btnCrearPaquete) this.els.btnCrearPaquete.addEventListener("click", () => this.crearPaquete());
+    if (this.els.btnCancelarEdicionPaquete) this.els.btnCancelarEdicionPaquete.addEventListener("click", () => this.cancelarEdicionPaquete());
     if (this.els.paquetePlanta) this.els.paquetePlanta.addEventListener("change", () => this.renderPlantaInfo("paquete"));
     if (this.els.paqueteProyectoSearch) {
       this.els.paqueteProyectoSearch.addEventListener("input", () => this.renderProyectoResultados());
@@ -432,6 +433,7 @@ window.Logistica = {
   },
 
   renderSelects() {
+    if (this.els.filterEstadoPaquete) this.els.filterEstadoPaquete.value = this.filters.estado || "Pendiente";
     this.renderProyectoSelect();
     this.renderPlantaSelect(this.els.paquetePlanta);
     this.renderPlantaSelect(this.els.viajePlanta);
@@ -585,6 +587,55 @@ window.Logistica = {
     return `${yyyy}-${mm}-${dd}`;
   },
 
+  isEditingPaquete() {
+    return !!window.Utils.normalizarTexto(this.els.paqueteEditId?.value);
+  },
+
+  setPaqueteFormMode(mode = "create") {
+    const editing = mode === "edit";
+    if (this.els.paqueteFormTitle) this.els.paqueteFormTitle.textContent = editing ? "Editar paquete" : "Nuevo paquete";
+    if (this.els.btnCrearPaquete) this.els.btnCrearPaquete.textContent = editing ? "Guardar cambios" : "Crear paquete";
+    if (this.els.btnCancelarEdicionPaquete) this.els.btnCancelarEdicionPaquete.classList.toggle("hidden", !editing);
+  },
+
+  cancelarEdicionPaquete() {
+    this.clearPaqueteForm();
+    this.setMessage(this.els.paqueteMessage, "Edición cancelada.", "");
+  },
+
+  editarPaquete(id) {
+    const p = this.paquetes[id];
+    if (!p) return;
+    if (p.estado !== "Pendiente") {
+      this.setMessage(this.els.paqueteMessage, "Solo se pueden editar paquetes pendientes.", "error");
+      return;
+    }
+
+    if (this.els.paqueteEditId) this.els.paqueteEditId.value = p.paquete_id || id;
+    if (this.els.paqueteProyectoKey) this.els.paqueteProyectoKey.value = p.proyecto_key || "";
+
+    const proyecto = p.proyecto_key ? this.proyectos[p.proyecto_key] : null;
+    if (proyecto) {
+      if (this.els.paqueteProyectoSearch) this.els.paqueteProyectoSearch.value = this.proyectoLabel(proyecto);
+      if (this.els.paqueteProyectoSeleccionado) {
+        this.els.paqueteProyectoSeleccionado.innerHTML = `Seleccionado: <strong>${window.Utils.escapeHtml(String(proyecto.ID || ""))}</strong> · ${window.Utils.escapeHtml(proyecto.Proyecto || "")} · ${window.Utils.escapeHtml(proyecto.Cliente || "")}`;
+      }
+    } else {
+      if (this.els.paqueteProyectoSearch) this.els.paqueteProyectoSearch.value = "";
+      if (this.els.paqueteProyectoSeleccionado) this.els.paqueteProyectoSeleccionado.textContent = "Sin proyecto relacionado.";
+    }
+
+    if (this.els.paquetePlanta) this.els.paquetePlanta.value = p.planta_id || "";
+    if (this.els.paqueteTipo) this.els.paqueteTipo.value = p.tipo_paquete || "Documentos";
+    if (this.els.paquetePrioridad) this.els.paquetePrioridad.value = p.prioridad || "Normal";
+    if (this.els.paqueteFechaLimite) this.els.paqueteFechaLimite.value = p.fecha_limite || "";
+    if (this.els.paqueteObservaciones) this.els.paqueteObservaciones.value = p.observaciones || "";
+    this.renderPlantaInfo("paquete");
+    this.setPaqueteFormMode("edit");
+    this.activateTab("paquetesTab");
+    this.setMessage(this.els.paqueteMessage, `Editando paquete ${p.paquete_id}.`, "success");
+  },
+
   async crearPaquete() {
     this.setMessage(this.els.paqueteMessage, "", "");
     try {
@@ -593,10 +644,20 @@ window.Logistica = {
 
       const proyectoKey = this.els.paqueteProyectoKey?.value || "";
       const proyecto = this.proyectos[proyectoKey] || null;
-      const id = `PKT_${Date.now()}`;
       const usuario = window.Auth.currentUser?.usuario || "sistema";
+      const editId = window.Utils.normalizarTexto(this.els.paqueteEditId?.value);
+      const baseId = editId || `PKT_${Date.now()}`;
+      const existente = editId ? (this.paquetes[editId] || null) : null;
+
+      if (editId && !existente) {
+        throw new Error("No se encontró el paquete a editar.");
+      }
+      if (existente && existente.estado !== "Pendiente") {
+        throw new Error("Solo se pueden editar paquetes pendientes.");
+      }
+
       const payload = {
-        paquete_id: id,
+        paquete_id: baseId,
         proyecto_key: proyecto?._firebaseKey || "",
         proyecto_id: proyecto?.ID || "",
         proyecto_nombre: proyecto?.Proyecto || "",
@@ -609,28 +670,29 @@ window.Logistica = {
         tipo_paquete: this.els.paqueteTipo.value || "Documentos",
         prioridad: this.els.paquetePrioridad.value || "Normal",
         fecha_limite: this.els.paqueteFechaLimite.value || "",
-        estado: "Pendiente",
-        responsable: proyecto?.Nombre || usuario,
-        creado_por: usuario,
-        creado_en: Date.now(),
-        viaje_id: "",
+        estado: existente?.estado || "Pendiente",
+        responsable: proyecto?.Nombre || existente?.responsable || usuario,
+        creado_por: existente?.creado_por || usuario,
+        creado_en: existente?.creado_en || Date.now(),
+        viaje_id: existente?.viaje_id || "",
         observaciones: window.Utils.normalizarTexto(this.els.paqueteObservaciones.value),
-        evidencia_url: "",
-        recibido_por: "",
-        fecha_entrega: "",
-        entregado_por: ""
+        evidencia_url: existente?.evidencia_url || "",
+        recibido_por: existente?.recibido_por || "",
+        fecha_entrega: existente?.fecha_entrega || "",
+        entregado_por: existente?.entregado_por || ""
       };
 
-      await window.database.ref(`paquetes/${id}`).set(payload);
-
-      // Recarga inmediata desde Firebase para que la tabla y KPIs se actualicen sin recargar la página.
+      await window.database.ref(`paquetes/${baseId}`).set(payload);
       await this.cargarPaquetes();
 
       if (payload.proyecto_key) {
-        await this.agregarHistorialProyecto(payload.proyecto_key, `Se creó paquete de entrega ${id} para ${payload.cliente} / ${payload.planta}.`);
+        const textoHistorial = editId
+          ? `Se editó el paquete de entrega ${baseId} para ${payload.cliente} / ${payload.planta}.`
+          : `Se creó paquete de entrega ${baseId} para ${payload.cliente} / ${payload.planta}.`;
+        await this.agregarHistorialProyecto(payload.proyecto_key, textoHistorial);
       }
 
-      if (this.debeNotificarCalCenter("creacion_paquete")) {
+      if (!editId && this.debeNotificarCalCenter("creacion_paquete")) {
         await this.enviarMensajeCalCenter(payload.responsable || usuario, this.construirMensajePaqueteCreado(payload));
       }
 
@@ -638,45 +700,84 @@ window.Logistica = {
       await this.cargarPaquetes();
       this.renderAll();
       this.activateTab("paquetesTab");
-      this.setMessage(this.els.paqueteMessage, "Paquete creado correctamente.", "success");
+      this.setMessage(this.els.paqueteMessage, editId ? "Paquete actualizado correctamente." : "Paquete creado correctamente.", "success");
     } catch (err) {
       console.error(err);
-      this.setMessage(this.els.paqueteMessage, err.message || "No fue posible crear el paquete.", "error");
+      this.setMessage(this.els.paqueteMessage, err.message || "No fue posible guardar el paquete.", "error");
     }
   },
 
   clearPaqueteForm() {
     this.limpiarProyectoSeleccionado();
+    if (this.els.paqueteEditId) this.els.paqueteEditId.value = "";
     if (this.els.paquetePlanta) this.els.paquetePlanta.value = "";
     if (this.els.paqueteTipo) this.els.paqueteTipo.value = "Documentos";
     if (this.els.paquetePrioridad) this.els.paquetePrioridad.value = "Normal";
     if (this.els.paqueteFechaLimite) this.els.paqueteFechaLimite.value = "";
     if (this.els.paqueteObservaciones) this.els.paqueteObservaciones.value = "";
     this.renderPlantaInfo("paquete");
+    this.setPaqueteFormMode("create");
   },
 
-  renderKPIs() {
-    const paquetes = Object.values(this.paquetes);
-    const viajes = Object.values(this.viajes);
-    const set = (el, v) => { if (el) el.textContent = v; };
-    set(this.els.kpiPendientes, paquetes.filter((p) => p.estado === "Pendiente").length);
-    set(this.els.kpiUrgentes, paquetes.filter((p) => ["Urgente", "Alta"].includes(p.prioridad) && p.estado !== "Entregado" && p.estado !== "Cancelado").length);
-    set(this.els.kpiViajes, viajes.filter((v) => ["Programado", "En ruta", "Propuesto"].includes(v.estado)).length);
-    set(this.els.kpiEntregados, paquetes.filter((p) => p.estado === "Entregado").length);
+  normalizarEstadoPaquete(valor) {
+    return window.Utils.normalizarTexto(valor).toLowerCase();
   },
 
-  renderPaquetes() {
+renderKPIs() {
+  const paquetes = Object.values(this.paquetes);
+  const viajes = Object.values(this.viajes);
+  const set = (el, v) => { if (el) el.textContent = v; };
+
+  set(
+    this.els.kpiPendientes,
+    paquetes.filter((p) => this.normalizarEstadoPaquete(p.estado) === "pendiente").length
+  );
+
+  set(
+    this.els.kpiUrgentes,
+    paquetes.filter((p) => {
+      const estado = this.normalizarEstadoPaquete(p.estado);
+      const prioridad = window.Utils.normalizarTexto(p.prioridad);
+      return ["Urgente", "Alta"].includes(prioridad) && estado !== "entregado" && estado !== "cancelado";
+    }).length
+  );
+
+  set(
+    this.els.kpiViajes,
+    viajes.filter((v) => ["Programado", "En ruta", "Propuesto"].includes(window.Utils.normalizarTexto(v.estado))).length
+  );
+
+  set(
+    this.els.kpiEntregados,
+    paquetes.filter((p) => this.normalizarEstadoPaquete(p.estado) === "entregado").length
+  );
+},
+
+renderPaquetes() {
     const body = this.els.paquetesTableBody;
     if (!body) return;
     body.innerHTML = "";
     const txt = window.Utils.normalizarTexto(this.filters.paquetes).toLowerCase();
-    const estado = window.Utils.normalizarTexto(this.filters.estado);
+    const estado = window.Utils.normalizarTexto(this.filters.estado).toLowerCase();
 
     const rows = Object.values(this.paquetes)
       .filter((p) => {
         const cadena = `${p.paquete_id} ${p.proyecto_id} ${p.proyecto_nombre} ${p.cliente} ${p.planta} ${p.zona_logistica}`.toLowerCase();
         const okTxt = !txt || cadena.includes(txt);
-        const okEstado = !estado || p.estado === estado;
+
+        const estadoPaquete = this.normalizarEstadoPaquete(p.estado);
+
+        let okEstado = true;
+        if (estado === "pendiente") {
+          okEstado = estadoPaquete === "pendiente";
+        } else if (estado === "entregado") {
+          okEstado = estadoPaquete === "entregado";
+        } else if (estado === "cancelado") {
+          okEstado = estadoPaquete === "cancelado";
+        } else if (estado === "todos" || !estado) {
+          okEstado = true;
+        }
+
         return okTxt && okEstado;
       })
       .sort((a, b) => Number(b.creado_en || 0) - Number(a.creado_en || 0));
@@ -712,6 +813,7 @@ window.Logistica = {
       actions.push(`<button class="btn ghost" data-action="entregar" data-id="${id}">Entregar</button>`);
     }
     if (p.estado === "Pendiente") {
+      actions.push(`<button class="btn ghost" data-action="editar" data-id="${id}">Editar</button>`);
       actions.push(`<button class="btn danger-outline" data-action="cancelar" data-id="${id}">Cancelar</button>`);
     }
     const planta = this.getPlanta(p.planta_id);
@@ -726,6 +828,7 @@ window.Logistica = {
     const p = this.paquetes[id];
     if (!p) return;
     if (action === "entregar") return this.openEntregaModal(id);
+    if (action === "editar") return this.editarPaquete(id);
     if (action === "cancelar") return this.cancelarPaquete(id);
     if (action === "maps") {
       const planta = this.getPlanta(p.planta_id);
@@ -748,19 +851,22 @@ window.Logistica = {
     this.renderAll();
   },
 
-  statusBadgePaquete(estado = "Pendiente") {
-    const cls = {
-      "Pendiente": "status-pendiente",
-      "Asignado a viaje": "status-asignado",
-      "En ruta": "status-ruta",
-      "Entregado": "status-entregado",
-      "No entregado": "status-cancelado",
-      "Cancelado": "status-cancelado"
-    }[estado] || "status-pendiente";
-    return `<span class="status ${cls}">${window.Utils.escapeHtml(estado)}</span>`;
-  },
+statusBadgePaquete(estado = "Pendiente") {
+  const estadoLimpio = this.normalizarEstadoPaquete(estado);
 
-  statusBadgeViaje(estado = "Programado") {
+  const cls = {
+    "pendiente": "status-pendiente",
+    "asignado a viaje": "status-asignado",
+    "en ruta": "status-ruta",
+    "entregado": "status-entregado",
+    "no entregado": "status-cancelado",
+    "cancelado": "status-cancelado"
+  }[estadoLimpio] || "status-pendiente";
+
+  return `<span class="status ${cls}">${window.Utils.escapeHtml(window.Utils.normalizarTexto(estado))}</span>`;
+},
+
+statusBadgeViaje(estado = "Programado") {
     const cls = {
       "Propuesto": "status-pendiente",
       "Programado": "status-asignado",

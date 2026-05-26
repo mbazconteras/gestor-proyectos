@@ -1,5 +1,7 @@
 window.UI = {
   els: {},
+  calCenterInbox: [],
+  calCenterSelectedKey: null,
 
   init() {
     this.els.loginView = document.getElementById("loginView");
@@ -18,6 +20,17 @@ window.UI = {
     this.els.btnEliminarCliente = document.getElementById("btnEliminarCliente");
     this.els.badgePanelRevision = document.getElementById("badgePanelRevision");
     this.els.badgeLogisticaEntregas = document.getElementById("badgeLogisticaEntregas");
+    this.els.btnCalCenter = document.getElementById("btnCalCenter");
+    this.els.badgeCalCenter = document.getElementById("badgeCalCenter");
+    this.els.calCenterDropdown = document.getElementById("calCenterDropdown");
+    this.els.calCenterList = document.getElementById("calCenterList");
+    this.els.calCenterThread = document.getElementById("calCenterThread");
+    this.els.calCenterThreadEmpty = document.getElementById("calCenterThreadEmpty");
+    this.els.calCenterThreadTitle = document.getElementById("calCenterThreadTitle");
+    this.els.calCenterThreadMeta = document.getElementById("calCenterThreadMeta");
+    this.els.calCenterThreadBody = document.getElementById("calCenterThreadBody");
+    this.els.calCenterReplyText = document.getElementById("calCenterReplyText");
+    this.els.calCenterMessage = document.getElementById("calCenterMessage");
     this.els.saveMessage = document.getElementById("saveMessage");
     this.els.stepsContainer = document.getElementById("stepsContainer");
 
@@ -52,6 +65,10 @@ window.UI = {
     const btnEliminarClienteConfirmar = byId("btnEliminarClienteConfirmar");
     const btnAbrirAdjunto = byId("btnAbrirAdjunto");
     const thSortID = byId("thSortID");
+    const btnCalCenter = byId("btnCalCenter");
+    const btnCerrarCalCenter = byId("btnCerrarCalCenter");
+    const btnResponderCalCenter = byId("btnResponderCalCenter");
+    const btnEliminarCalCenter = byId("btnEliminarCalCenter");
 
     if (btnLogin) btnLogin.addEventListener("click", window.App.handleLogin);
     if (btnLogout) btnLogout.addEventListener("click", window.App.handleLogout);
@@ -68,6 +85,13 @@ window.UI = {
     if (btnEliminarClienteConfirmar) btnEliminarClienteConfirmar.addEventListener("click", window.App.handleEliminarCliente);
     if (btnAbrirAdjunto) btnAbrirAdjunto.addEventListener("click", this.abrirAdjunto);
     if (thSortID) thSortID.addEventListener("click", window.App.toggleSortById);
+    if (btnCalCenter) btnCalCenter.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.toggleCalCenter();
+    });
+    if (btnCerrarCalCenter) btnCerrarCalCenter.addEventListener("click", () => this.closeCalCenter());
+    if (btnResponderCalCenter) btnResponderCalCenter.addEventListener("click", window.App.handleResponderCalCenter);
+    if (btnEliminarCalCenter) btnEliminarCalCenter.addEventListener("click", window.App.handleEliminarCalCenter);
 
     ["searchInput", "filterCliente", "filterResponsable", "filterEstado"].forEach((id) => {
       const el = byId(id);
@@ -94,6 +118,13 @@ window.UI = {
         if (e.target === this.els.modalEliminarCliente) this.closeDeleteClientModal();
       });
     }
+
+    document.addEventListener("click", (e) => {
+      if (!this.els.calCenterDropdown || this.els.calCenterDropdown.classList.contains("hidden")) return;
+      if (this.els.btnCalCenter?.contains(e.target)) return;
+      if (this.els.calCenterDropdown.contains(e.target)) return;
+      this.closeCalCenter();
+    });
   },
 
   renderToday() {
@@ -184,55 +215,238 @@ window.UI = {
     el.classList.toggle("hidden", !txt);
   },
 
-  async refreshNavBadges() {
-  try {
-    const [estudiosSnap, paquetesSnap] = await Promise.all([
-      window.database.ref("estudios").once("value"),
-      window.database.ref("paquetes").once("value")
-    ]);
 
-    const estudios = estudiosSnap.val() || {};
-    const paquetes = paquetesSnap.val() || {};
+  setCalCenterMessage(text, type = "") {
+    if (!this.els.calCenterMessage) return;
+    this.els.calCenterMessage.textContent = text || "";
+    this.els.calCenterMessage.className = `message ${type}`.trim();
+  },
 
-    const normalizaEstado = (valor) => {
-      return String(valor || "")
-        .trim()
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
+  toggleCalCenter() {
+    if (!this.els.calCenterDropdown) return;
+    const isHidden = this.els.calCenterDropdown.classList.contains("hidden");
+    if (isHidden) {
+      this.openCalCenter();
+      return;
+    }
+    this.closeCalCenter();
+  },
+
+  async openCalCenter() {
+    if (!this.els.calCenterDropdown) return;
+    this.els.calCenterDropdown.classList.remove("hidden");
+    this.setCalCenterMessage("", "");
+    await this.refreshCalCenterInbox();
+  },
+
+  closeCalCenter() {
+    if (!this.els.calCenterDropdown) return;
+    this.els.calCenterDropdown.classList.add("hidden");
+    this.setCalCenterMessage("", "");
+  },
+
+  normalizeCalCenterRecord(key, raw = {}) {
+    return {
+      _firebaseKey: key,
+      ID: window.Utils.normalizarTexto(raw.ID || key),
+      _From: window.Utils.normalizarTexto(raw._From),
+      _To: window.Utils.normalizarTexto(raw._To),
+      _Body: window.Utils.normalizarTexto(raw._Body)
     };
+  },
 
-    let revisionCount = 0;
-    Object.keys(estudios).forEach((key) => {
-      const item = estudios[key] || {};
-      const estado = normalizaEstado(item.estado);
-
-      if (estado === "para revision" || estado === "corregido") {
-        revisionCount += 1;
-      }
+  formatCalCenterDate(value) {
+    const parsed = window.Utils.parseFechaFlexible(value);
+    if (!parsed) return window.Utils.normalizarTexto(value) || "Sin fecha";
+    return parsed.toLocaleString("es-MX", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
     });
+  },
 
-    let logisticaCount = 0;
-    Object.keys(paquetes).forEach((key) => {
-      const item = paquetes[key] || {};
-      const estado = normalizaEstado(item.estado);
+  extractCalCenterDate(msg) {
+    const body = window.Utils.normalizarTexto(msg?._Body);
+    if (!body) return msg?.ID || "";
+    const match = body.match(/\((\d{1,2}\/\d{1,2}\/\d{4}(?:\s+\d{1,2}:\d{2}\s+(?:a\. m\.|p\. m\.|am|pm))?)\)/i);
+    return match ? match[1] : (msg?.ID || "");
+  },
 
-      if (estado === "pendiente") {
-        logisticaCount += 1;
+  getCalCenterPreview(body) {
+    const txt = window.Utils.normalizarTexto(body).replace(/\s+/g, " ").trim();
+    return txt.length > 140 ? `${txt.slice(0, 140)}…` : txt;
+  },
+
+  async refreshCalCenterInbox() {
+    try {
+      const usuario = window.Utils.normalizarTexto(window.Auth.currentUser?.usuario).toLowerCase();
+      const snap = await window.database.ref("CalCenter").once("value");
+      const data = snap.val() || {};
+
+      const inbox = Object.keys(data)
+        .map((key) => this.normalizeCalCenterRecord(key, data[key] || {}))
+        .filter((msg) => window.Utils.normalizarTexto(msg._To).toLowerCase() === usuario)
+        .sort((a, b) => Number(b._firebaseKey) - Number(a._firebaseKey));
+
+      this.calCenterInbox = inbox;
+      this.renderCalCenterList();
+
+      if (!inbox.length) {
+        this.calCenterSelectedKey = null;
+        this.renderCalCenterThread(null);
+        return;
       }
+
+      const stillExists = inbox.find((x) => x._firebaseKey === this.calCenterSelectedKey);
+      if (stillExists) {
+        this.renderCalCenterThread(stillExists);
+        return;
+      }
+
+      this.selectCalCenterMessage(inbox[0]._firebaseKey);
+    } catch (err) {
+      console.error("Error al cargar CalCenter:", err);
+      this.calCenterInbox = [];
+      this.renderCalCenterList();
+      this.renderCalCenterThread(null);
+      this.setCalCenterMessage("No fue posible cargar los mensajes.", "error");
+    }
+  },
+
+  renderCalCenterList() {
+    const container = this.els.calCenterList;
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    if (!this.calCenterInbox.length) {
+      container.innerHTML = `<div class="calcenter-empty">No tienes mensajes pendientes.</div>`;
+      return;
+    }
+
+    this.calCenterInbox.forEach((msg) => {
+      const item = document.createElement("div");
+      item.className = "calcenter-item";
+      if (msg._firebaseKey === this.calCenterSelectedKey) {
+        item.classList.add("active");
+      }
+
+      item.innerHTML = `
+        <div class="calcenter-item-top">
+          <div class="calcenter-item-from">${window.Utils.escapeHtml(msg._From || "Sin remitente")}</div>
+          <div class="calcenter-item-date">${window.Utils.escapeHtml(this.formatCalCenterDate(this.extractCalCenterDate(msg)))}</div>
+        </div>
+        <div class="calcenter-item-preview">${window.Utils.escapeHtml(this.getCalCenterPreview(msg._Body))}</div>
+      `;
+
+      item.addEventListener("click", () => this.selectCalCenterMessage(msg._firebaseKey));
+      container.appendChild(item);
     });
+  },
 
-    console.log("Badge Panel Revision:", revisionCount);
-    console.log("Badge Logistica / Entregas:", logisticaCount);
+  selectCalCenterMessage(key) {
+    this.calCenterSelectedKey = key;
+    this.renderCalCenterList();
+    const selected = this.calCenterInbox.find((x) => x._firebaseKey === key) || null;
+    this.renderCalCenterThread(selected);
+    this.setCalCenterMessage("", "");
+  },
 
-    this.setNavBadge(this.els.badgePanelRevision, revisionCount);
-    this.setNavBadge(this.els.badgeLogisticaEntregas, logisticaCount);
-  } catch (err) {
-    console.error("No se pudieron cargar los badges del menú:", err);
-    this.setNavBadge(this.els.badgePanelRevision, 0);
-    this.setNavBadge(this.els.badgeLogisticaEntregas, 0);
-  }
-},
+  renderCalCenterThread(msg) {
+    if (!this.els.calCenterThread || !this.els.calCenterThreadEmpty) return;
+
+    if (!msg) {
+      this.els.calCenterThread.classList.add("hidden");
+      this.els.calCenterThreadEmpty.classList.remove("hidden");
+      if (this.els.calCenterReplyText) this.els.calCenterReplyText.value = "";
+      return;
+    }
+
+    this.els.calCenterThread.classList.remove("hidden");
+    this.els.calCenterThreadEmpty.classList.add("hidden");
+
+    if (this.els.calCenterThreadTitle) {
+      this.els.calCenterThreadTitle.textContent = `Conversación con ${msg._From || "usuario"}`;
+    }
+    if (this.els.calCenterThreadMeta) {
+      this.els.calCenterThreadMeta.textContent = `Mensaje ${msg.ID || msg._firebaseKey}`;
+    }
+    if (this.els.calCenterThreadBody) {
+      this.els.calCenterThreadBody.textContent = msg._Body || "";
+    }
+    if (this.els.calCenterReplyText) {
+      this.els.calCenterReplyText.value = "";
+    }
+  },
+
+  getSelectedCalCenterMessage() {
+    if (!this.calCenterSelectedKey) return null;
+    return this.calCenterInbox.find((x) => x._firebaseKey === this.calCenterSelectedKey) || null;
+  },
+
+  async refreshNavBadges() {
+    try {
+      const usuario = window.Utils.normalizarTexto(window.Auth.currentUser?.usuario).toLowerCase();
+
+      const [estudiosSnap, paquetesSnap, calCenterSnap] = await Promise.all([
+        window.database.ref("estudios").once("value"),
+        window.database.ref("paquetes").once("value"),
+        window.database.ref("CalCenter").once("value")
+      ]);
+
+      const estudios = estudiosSnap.val() || {};
+      const paquetes = paquetesSnap.val() || {};
+      const calcenter = calCenterSnap.val() || {};
+
+      const normalizaEstado = (valor) => {
+        return String(valor || "")
+          .trim()
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[̀-ͯ]/g, "");
+      };
+
+      let revisionCount = 0;
+      Object.keys(estudios).forEach((key) => {
+        const item = estudios[key] || {};
+        const estado = normalizaEstado(item.estado);
+
+        if (estado === "para revision" || estado === "corregido") {
+          revisionCount += 1;
+        }
+      });
+
+      let logisticaCount = 0;
+      Object.keys(paquetes).forEach((key) => {
+        const item = paquetes[key] || {};
+        const estado = normalizaEstado(item.estado);
+
+        if (estado === "pendiente") {
+          logisticaCount += 1;
+        }
+      });
+
+      let calCenterCount = 0;
+      Object.keys(calcenter).forEach((key) => {
+        const item = calcenter[key] || {};
+        const toUser = window.Utils.normalizarTexto(item._To).toLowerCase();
+        if (toUser === usuario) {
+          calCenterCount += 1;
+        }
+      });
+
+      this.setNavBadge(this.els.badgePanelRevision, revisionCount);
+      this.setNavBadge(this.els.badgeLogisticaEntregas, logisticaCount);
+      this.setNavBadge(this.els.badgeCalCenter, calCenterCount);
+    } catch (err) {
+      console.error("No se pudieron cargar los badges del menú:", err);
+      this.setNavBadge(this.els.badgePanelRevision, 0);
+      this.setNavBadge(this.els.badgeLogisticaEntregas, 0);
+      this.setNavBadge(this.els.badgeCalCenter, 0);
+    }
+  },
 
   renderFilterOptions() {
     const clienteSel = document.getElementById("filterCliente");
