@@ -42,30 +42,14 @@
     </header>
 
     <main class="layout">
-      <section class="kpi-grid">
-        <article class="kpi-card">
-          <span>Paquetes pendientes</span>
-          <strong id="kpiPendientes">0</strong>
-        </article>
-        <article class="kpi-card">
-          <span>Urgentes / alta</span>
-          <strong id="kpiUrgentes">0</strong>
-        </article>
-        <article class="kpi-card">
-          <span>Viajes programados</span>
-          <strong id="kpiViajes">0</strong>
-        </article>
-        <article class="kpi-card">
-          <span>Entregados</span>
-          <strong id="kpiEntregados">0</strong>
-        </article>
-      </section>
 
       <section class="content-grid">
         <aside class="panel side-panel">
           <div class="panel-title-row">
-            <h2>Nuevo paquete</h2>
+            <h2 id="paqueteFormTitle">Nuevo paquete</h2>
           </div>
+
+          <input id="paqueteEditId" type="hidden" />
 
           <label>Proyecto relacionado</label>
           <div class="search-field">
@@ -109,6 +93,7 @@
 
 
           <button id="btnCrearPaquete" class="btn primary full">Crear paquete</button>
+          <button id="btnCancelarEdicionPaquete" class="btn ghost full hidden" type="button">Cancelar edición</button>
           <div id="paqueteMessage" class="message"></div>
         </aside>
 
@@ -128,13 +113,10 @@
               <div class="filters-inline">
                 <input id="filterPaquetes" type="text" placeholder="Buscar cliente, planta, proyecto..." />
                 <select id="filterEstadoPaquete">
-                  <option value="">Todos</option>
-                  <option value="Pendiente">Pendiente</option>
-                  <option value="Asignado a viaje">Asignado a viaje</option>
-                  <option value="En ruta">En ruta</option>
+                  <option value="Pendiente" selected>Pendiente</option>
                   <option value="Entregado">Entregado</option>
-                  <option value="No entregado">No entregado</option>
                   <option value="Cancelado">Cancelado</option>
+                  <option value="Todos">Todos</option>
                 </select>
               </div>
             </div>
