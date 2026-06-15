@@ -19,6 +19,7 @@ window.UI = {
     this.els.btnNuevoCliente = document.getElementById("btnNuevoCliente");
     this.els.btnEliminarCliente = document.getElementById("btnEliminarCliente");
     this.els.badgePanelRevision = document.getElementById("badgePanelRevision");
+    this.els.badgePanelRevisionLiberado = document.getElementById("badgePanelRevisionLiberado");
     this.els.badgeLogisticaEntregas = document.getElementById("badgeLogisticaEntregas");
     this.els.btnCalCenter = document.getElementById("btnCalCenter");
     this.els.badgeCalCenter = document.getElementById("badgeCalCenter");
@@ -405,16 +406,22 @@ window.UI = {
           .trim()
           .toLowerCase()
           .normalize("NFD")
-          .replace(/[̀-ͯ]/g, "");
+          .replace(/[\u0300-\u036f]/g, "");
       };
 
       let revisionCount = 0;
+      let liberadoImpresionCount = 0;
+
       Object.keys(estudios).forEach((key) => {
         const item = estudios[key] || {};
         const estado = normalizaEstado(item.estado);
 
         if (estado === "para revision" || estado === "corregido") {
           revisionCount += 1;
+        }
+
+        if (estado === "liberado para impresion") {
+          liberadoImpresionCount += 1;
         }
       });
 
@@ -438,11 +445,13 @@ window.UI = {
       });
 
       this.setNavBadge(this.els.badgePanelRevision, revisionCount);
+      this.setNavBadge(this.els.badgePanelRevisionLiberado, liberadoImpresionCount);
       this.setNavBadge(this.els.badgeLogisticaEntregas, logisticaCount);
       this.setNavBadge(this.els.badgeCalCenter, calCenterCount);
     } catch (err) {
       console.error("No se pudieron cargar los badges del menú:", err);
       this.setNavBadge(this.els.badgePanelRevision, 0);
+      this.setNavBadge(this.els.badgePanelRevisionLiberado, 0);
       this.setNavBadge(this.els.badgeLogisticaEntregas, 0);
       this.setNavBadge(this.els.badgeCalCenter, 0);
     }

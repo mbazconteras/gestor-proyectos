@@ -34,6 +34,7 @@ window.App = {
     window.UI.showEmptyDetail();
     window.UI.setLoginMessage("", "");
     window.UI.setNavBadge(window.UI.els.badgePanelRevision, 0);
+    window.UI.setNavBadge(window.UI.els.badgePanelRevisionLiberado, 0);
     window.UI.setNavBadge(window.UI.els.badgeLogisticaEntregas, 0);
     window.UI.setNavBadge(window.UI.els.badgeCalCenter, 0);
     window.UI.closeCalCenter();
