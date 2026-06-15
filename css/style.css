@@ -1158,3 +1158,10 @@ textarea {
 .section-entrega textarea {
   background: #ffffff;
 }
+
+
+.nav-badge-green {
+  background: #16a34a;
+  top: -8px;
+  right: 22px;
+}
