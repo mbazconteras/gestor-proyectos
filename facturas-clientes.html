@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Facturas Clientes</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .facturas-layout { display:grid; grid-template-columns:1.15fr 1fr; gap:18px; padding:18px; height:calc(100vh - 92px); overflow:hidden; }
+    .facturas-scroll { overflow:auto; min-height:0; }
+    .facturas-kpis { grid-template-columns:repeat(4,minmax(120px,1fr)); }
+    .facturas-toolbar { display:grid; grid-template-columns:1.4fr repeat(3,minmax(150px,1fr)); gap:12px; margin-bottom:14px; }
+    .facturas-toolbar .form-group { margin-bottom:0; }
+    .facturas-table { min-width:1050px; }
+    .readonly-note { background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8; border-radius:14px; padding:10px 12px; font-size:13px; font-weight:700; margin-bottom:14px; }
+    .detail-grid-2 { display:grid; grid-template-columns:repeat(2,minmax(160px,1fr)); gap:12px; }
+    .project-search-results { max-height:220px; overflow:auto; border:1px solid var(--border); border-radius:14px; background:#fff; margin-top:8px; }
+    .project-search-item { padding:10px 12px; border-bottom:1px solid #edf2f7; cursor:pointer; }
+    .project-search-item:hover { background:#f6faff; }
+    .project-search-item strong { color:#1d3557; }
+    .project-search-meta { color:var(--muted); font-size:12px; margin-top:4px; }
+    .factura-section { border:1px solid var(--border); border-radius:18px; padding:16px; background:#fff; margin-bottom:14px; }
+    .factura-section h3, .factura-section h4 { margin:0 0 12px; }
+    .status-paid { background:#dcfce7; color:#166534; }
+    .status-overdue { background:#fee2e2; color:#991b1b; }
+    .status-pending { background:#fef3c7; color:#92400e; }
+    .status-canceled { background:#e5e7eb; color:#374151; }
+    @media (max-width:1200px){ .facturas-layout{grid-template-columns:1fr; height:auto; overflow:visible;} .facturas-kpis{grid-template-columns:repeat(2,minmax(120px,1fr));} .facturas-toolbar{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+  <div id="appFacturasClientes">
+    <section id="loginView" class="view active">
+      <div class="login-shell">
+        <div class="login-card">
+          <div class="login-brand">
+            <div class="brand-badge">FC</div>
+            <div><h1>Facturas Clientes</h1><p>Control de cuentas por cobrar</p></div>
+          </div>
+          <div class="form-group"><label for="loginUsuario">Usuario</label><input type="text" id="loginUsuario" placeholder="Ingresa tu usuario" autocomplete="username" /></div>
+          <div class="form-group"><label for="loginPassword">Contraseña</label><input type="password" id="loginPassword" placeholder="Ingresa tu contraseña" autocomplete="current-password" /></div>
+          <button id="btnLogin" class="btn btn-primary btn-block">Ingresar</button>
+          <div id="loginMessage" class="message"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="mainView" class="view">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="brand-mark">FC</div>
+          <div><h2>Facturas Clientes</h2><div class="topbar-subtitle">Facturación, vencimientos y cobros de clientes</div></div>
+        </div>
+        <div class="topbar-center"><div id="sessionBadge" class="session-badge"></div><div id="todayBadge" class="today-badge"></div></div>
+        <div class="topbar-right">
+          <button id="btnNuevaFactura" class="btn btn-primary hidden" type="button">Nueva factura</button>
+          <button id="btnActualizar" class="btn btn-secondary" type="button">Actualizar</button>
+          <a class="btn btn-secondary" href="gerencia.html">Panel Gerencial</a>
+          <a class="btn btn-secondary" href="index.html">Volver a Proyectos</a>
+          <button id="btnLogout" class="btn btn-secondary" type="button">Cerrar sesión</button>
+        </div>
+      </header>
+
+      <main class="facturas-layout">
+        <section class="panel panel-left facturas-scroll">
+          <div class="panel-left-header compact-header"><div><h3>Resumen general</h3><p>Lectura desde el nodo FacturasClientes.</p></div></div>
+          <div class="readonly-note">Este módulo no modifica los pasos Step10/Step11/Step12 del proyecto. Registra y controla facturas en un nodo separado.</div>
+
+          <div class="kpi-grid compact-kpis facturas-kpis">
+            <div class="kpi-card kpi-total"><div class="kpi-label">Facturas</div><div class="kpi-value" id="kpiTotalFacturas">0</div></div>
+            <div class="kpi-card kpi-wait"><div class="kpi-label">Pendientes</div><div class="kpi-value" id="kpiPendientes">0</div></div>
+            <div class="kpi-card kpi-bill"><div class="kpi-label">Vencidas</div><div class="kpi-value" id="kpiVencidas">0</div></div>
+            <div class="kpi-card kpi-paid"><div class="kpi-label">Pagadas</div><div class="kpi-value" id="kpiPagadas">0</div></div>
+          </div>
+
+          <div class="kpi-grid compact-kpis facturas-kpis hidden" data-montos="true">
+            <div class="kpi-card kpi-total"><div class="kpi-label">Total facturado</div><div class="kpi-value" id="kpiTotalFacturado">$0</div></div>
+            <div class="kpi-card kpi-bill"><div class="kpi-label">Por cobrar</div><div class="kpi-value" id="kpiMontoPorCobrar">$0</div></div>
+          </div>
+
+          <div class="filters-grid facturas-toolbar">
+            <div class="form-group"><input id="searchInput" type="text" placeholder="Buscar proyecto, cliente, factura, PO o responsable" /></div>
+            <div class="form-group"><select id="filterCliente"><option value="">Cliente</option></select></div>
+            <div class="form-group"><select id="filterEstado"><option value="">Estado</option><option value="Pendiente">Pendiente</option><option value="Vencida">Vencida</option><option value="Pagada">Pagada</option><option value="Cancelada">Cancelada</option></select></div>
+            <div class="form-group"><select id="filterProyecto"><option value="">Proyecto</option></select></div>
+          </div>
+
+          <div class="table-wrapper projects-table-wrapper">
+            <table class="projects-table facturas-table">
+              <thead><tr><th>ID</th><th>Proyecto</th><th>Cliente</th><th>No. factura</th><th>Estado</th><th>F. factura</th><th>F. vencimiento</th><th data-montos="true">Monto</th><th>F. pago</th></tr></thead>
+              <tbody id="facturasTableBody"></tbody>
+            </table>
+          </div>
+          <div id="tableEmpty" class="empty-state hidden">No hay facturas para mostrar.</div>
+        </section>
+
+        <section class="panel panel-right facturas-scroll">
+          <div id="detailEmpty" class="detail-empty">Selecciona una factura para ver su detalle.</div>
+          <div id="detailContent" class="hidden">
+            <div class="detail-hero">
+              <div class="detail-hero-main"><div class="detail-icon">🧾</div><div><div class="detail-mini">Ficha de factura cliente</div><h3 id="detailTitle">Factura</h3><div class="detail-meta-line" id="detailMeta"></div></div></div>
+              <div class="detail-hero-actions"><span id="detailEstadoBadge" class="status-badge">Estado</span><button id="btnGuardarFactura" class="btn btn-primary hidden" type="button">Guardar</button></div>
+            </div>
+
+            <div class="detail-section section-general">
+              <div class="section-header"><div class="section-icon">📌</div><h4>Datos de la factura</h4></div>
+              <div class="detail-grid">
+                <div class="form-group"><label for="fieldID">ID</label><input id="fieldID" type="text" disabled /></div>
+                <div class="form-group"><label for="fieldProyecto">Proyecto</label><input id="fieldProyecto" type="text" disabled /></div>
+                <div class="form-group"><label for="fieldCliente">Cliente</label><input id="fieldCliente" type="text" disabled /></div>
+                <div class="form-group"><label for="fieldPOProyecto">PO Proyecto</label><input id="fieldPOProyecto" type="text" disabled /></div>
+                <div class="form-group"><label for="fieldResponsable">Responsable</label><input id="fieldResponsable" type="text" disabled /></div>
+                <div class="form-group"><label for="fieldNumeroFactura">Número de factura</label><input id="fieldNumeroFactura" type="text" /></div>
+                <div class="form-group"><label for="fieldFechaFactura">Fecha factura</label><input id="fieldFechaFactura" type="date" /></div>
+                <div class="form-group"><label for="fieldFechaVencimiento">Fecha vencimiento</label><input id="fieldFechaVencimiento" type="date" /></div>
+                <div class="form-group"><label for="fieldEstadoCobro">Estado cobro</label><select id="fieldEstadoCobro"><option value="Pendiente">Pendiente</option><option value="Pagada">Pagada</option><option value="Cancelada">Cancelada</option></select></div>
+                <div class="form-group"><label for="fieldFechaPago">Fecha pago</label><input id="fieldFechaPago" type="date" /></div>
+                <div class="form-group" data-montos="true"><label for="fieldMonto">Monto</label><input id="fieldMonto" type="number" min="0" step="0.01" /></div>
+                <div class="form-group" data-montos="true"><label for="fieldMoneda">Moneda</label><select id="fieldMoneda"><option value="MXN">MXN</option><option value="USD">USD</option><option value="EUR">EUR</option></select></div>
+                <div class="form-group full-width"><label for="fieldArchivoFactura">Link archivo factura</label><input id="fieldArchivoFactura" type="text" placeholder="https://..." /></div>
+                <div class="form-group full-width"><label for="fieldObservaciones">Observaciones</label><textarea id="fieldObservaciones" rows="5"></textarea></div>
+              </div>
+              <div id="saveMessage" class="message"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </section>
+  </div>
+
+  <div id="modalNuevaFactura" class="modal hidden">
+    <div class="modal-card wide-modal">
+      <div class="modal-header"><div><h3>Nueva factura cliente</h3><p>Selecciona un proyecto y captura la información de facturación.</p></div><button id="btnCerrarModalNuevaFactura" class="modal-close" type="button">×</button></div>
+      <div class="modal-body">
+        <div class="form-group full-width"><label for="nuevoProyectoSearch">Buscar proyecto por ID, cliente o nombre</label><input type="text" id="nuevoProyectoSearch" placeholder="Escribe para buscar proyecto" /><div id="nuevoProyectoResultados" class="project-search-results hidden"></div></div>
+        <div class="detail-grid">
+          <div class="form-group"><label>Proyecto seleccionado</label><input id="nuevoProyectoSeleccionado" type="text" disabled /></div>
+          <div class="form-group"><label for="nuevoNumeroFactura">Número factura</label><input id="nuevoNumeroFactura" type="text" /></div>
+          <div class="form-group"><label for="nuevoFechaFactura">Fecha factura</label><input id="nuevoFechaFactura" type="date" /></div>
+          <div class="form-group"><label for="nuevoFechaVencimiento">Fecha vencimiento</label><input id="nuevoFechaVencimiento" type="date" /></div>
+          <div class="form-group" data-montos="true"><label for="nuevoMonto">Monto</label><input id="nuevoMonto" type="number" min="0" step="0.01" /></div>
+          <div class="form-group" data-montos="true"><label for="nuevoMoneda">Moneda</label><select id="nuevoMoneda"><option value="MXN">MXN</option><option value="USD">USD</option><option value="EUR">EUR</option></select></div>
+          <div class="form-group full-width"><label for="nuevoArchivoFactura">Link archivo factura</label><input id="nuevoArchivoFactura" type="text" placeholder="https://..." /></div>
+          <div class="form-group full-width"><label for="nuevoObservaciones">Observaciones</label><textarea id="nuevoObservaciones" rows="4"></textarea></div>
+        </div>
+        <div id="newFacturaMessage" class="message"></div>
+      </div>
+      <div class="modal-footer"><button id="btnCrearFactura" class="btn btn-primary" type="button">Guardar factura</button></div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/facturas-clientes.js"></script>
+</body>
+</html>

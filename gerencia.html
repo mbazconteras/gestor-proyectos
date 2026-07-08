@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel Gerencial</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .gerencia-layout {
+      display: grid;
+      grid-template-columns: 1.2fr 0.9fr;
+      gap: 18px;
+      padding: 18px;
+      height: calc(100vh - 92px);
+      overflow: hidden;
+    }
+
+    .gerencia-panel-scroll {
+      overflow: auto;
+      min-height: 0;
+    }
+
+    .gerencia-section {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .gerencia-section h3,
+    .gerencia-section h4 {
+      margin: 0 0 10px;
+    }
+
+    .gerencia-section p {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .gerencia-kpis {
+      grid-template-columns: repeat(4, minmax(130px, 1fr));
+    }
+
+    .gerencia-table {
+      min-width: 1000px;
+    }
+
+    .gerencia-small-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 520px;
+    }
+
+    .gerencia-small-table th,
+    .gerencia-small-table td {
+      border-bottom: 1px solid #edf2f7;
+      padding: 10px;
+      font-size: 13px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .gerencia-small-table th {
+      color: var(--muted);
+      background: #edf4ff;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .alert-card {
+      border: 1px solid var(--border);
+      border-left: 5px solid var(--warning);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #fffaf0;
+      cursor: pointer;
+    }
+
+    .alert-card:hover {
+      filter: brightness(0.99);
+    }
+
+    .alert-card.high {
+      border-left-color: var(--danger);
+      background: #fff7f7;
+    }
+
+    .alert-card.medium {
+      border-left-color: var(--warning);
+      background: #fffaf0;
+    }
+
+    .alert-card.low {
+      border-left-color: var(--primary);
+      background: #f8fbff;
+    }
+
+    .alert-title {
+      font-weight: 800;
+      margin-bottom: 6px;
+      color: #1d3557;
+    }
+
+    .alert-meta {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .gerencia-toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .gerencia-toolbar .form-group {
+      margin-bottom: 0;
+      min-width: 180px;
+      flex: 1;
+    }
+
+
+
+    .period-note {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: -4px;
+      line-height: 1.4;
+    }
+
+    .period-help {
+      background: #f8fbff;
+      border: 1px solid #dbeafe;
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: #334155;
+      font-size: 12px;
+      line-height: 1.45;
+      margin-top: 10px;
+    }
+
+    .period-help strong {
+      color: #1d3557;
+    }
+
+    .readonly-note {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1d4ed8;
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .gerencia-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .detail-box {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background: #fafcff;
+    }
+
+    .detail-box-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .detail-box-value {
+      color: var(--text);
+      font-size: 14px;
+      word-break: break-word;
+    }
+
+    .empty-soft {
+      color: var(--muted);
+      background: #f8fafc;
+      border: 1px dashed var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 13px;
+    }
+
+    @media (max-width: 1200px) {
+      .gerencia-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+        overflow: visible;
+      }
+      .gerencia-kpis {
+        grid-template-columns: repeat(2, minmax(130px, 1fr));
+      }
+    }
+
+    .summary-box {
+      background: #f8fbff;
+      border: 1px solid #dbeafe;
+      border-radius: 14px;
+      padding: 12px 14px;
+      color: #1f2f46;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .summary-line + .summary-line {
+      margin-top: 7px;
+    }
+
+    .alert-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 64px;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 12px;
+      font-weight: 800;
+      border: 1px solid var(--border);
+      background: #f8fbff;
+    }
+
+    .alert-pill.high {
+      color: #991b1b;
+      background: #fee2e2;
+      border-color: #fecaca;
+    }
+
+    .alert-pill.medium {
+      color: #92400e;
+      background: #fef3c7;
+      border-color: #fde68a;
+    }
+
+    .alert-pill.low {
+      color: #1d4ed8;
+      background: #dbeafe;
+      border-color: #bfdbfe;
+    }
+
+  </style>
+</head>
+<body>
+  <div id="appGerencia">
+    <section id="loginView" class="view active">
+      <div class="login-shell">
+        <div class="login-card">
+          <div class="login-brand">
+            <div class="brand-badge">GA</div>
+            <div>
+              <h1>Panel Gerencial</h1>
+              <p>Acceso administrativo de consulta</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="loginUsuario">Usuario</label>
+            <input type="text" id="loginUsuario" placeholder="Ingresa tu usuario" autocomplete="username" />
+          </div>
+
+          <div class="form-group">
+            <label for="loginPassword">Contraseña</label>
+            <input type="password" id="loginPassword" placeholder="Ingresa tu contraseña" autocomplete="current-password" />
+          </div>
+
+          <button id="btnLogin" class="btn btn-primary btn-block">Ingresar</button>
+          <div id="loginMessage" class="message"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="mainView" class="view">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="brand-mark">GA</div>
+          <div>
+            <h2>Panel Gerencial</h2>
+            <div class="topbar-subtitle">Lectura ejecutiva de proyectos, avances y servicios externos</div>
+          </div>
+        </div>
+
+        <div class="topbar-center">
+          <div id="sessionBadge" class="session-badge"></div>
+          <div id="todayBadge" class="today-badge"></div>
+        </div>
+
+        <div class="topbar-right">
+          <button id="btnActualizar" class="btn btn-secondary" type="button">Actualizar</button>
+          <a class="btn btn-secondary" href="servicios-externos.html">Servicios Externos</a>
+          <a class="btn btn-secondary" href="facturas-clientes.html">Facturas Clientes</a>
+          <a class="btn btn-secondary" href="index.html">Volver a Proyectos</a>
+          <button id="btnLogout" class="btn btn-secondary" type="button">Cerrar sesión</button>
+        </div>
+      </header>
+
+      <main class="gerencia-layout">
+        <section class="panel panel-left gerencia-panel-scroll">
+          <div class="panel-left-header compact-header">
+            <div>
+              <h3>Resumen ejecutivo</h3>
+              <p>Indicadores calculados desde la base actual de ProjectHub.</p>
+            </div>
+          </div>
+
+          <div class="readonly-note">
+            Este panel es solo de consulta. No guarda, no elimina y no modifica proyectos ni servicios externos.
+          </div>
+
+
+
+          <div class="gerencia-section">
+            <h3>Resumen gerencial automático</h3>
+            <p>Lectura ejecutiva generada con reglas trazables desde proyectos, servicios externos y facturas.</p>
+            <div id="executiveSummaryText" class="summary-box">Sin datos cargados.</div>
+          </div>
+
+          <div id="kpiGrid" class="kpi-grid compact-kpis gerencia-kpis" style="margin-top:14px;">
+            <div class="kpi-card kpi-total"><div class="kpi-label">Proyectos</div><div class="kpi-value" id="kpiTotalProyectos">0</div></div>
+            <div class="kpi-card kpi-dev"><div class="kpi-label">Activos</div><div class="kpi-value" id="kpiActivos">0</div></div>
+            <div class="kpi-card kpi-delivery"><div class="kpi-label">Entregados sin facturar</div><div class="kpi-value" id="kpiEntregadosSinFacturar">0</div></div>
+            <div class="kpi-card kpi-bill"><div class="kpi-label">Facturados sin pagar</div><div class="kpi-value" id="kpiFacturadosSinPagar">0</div></div>
+            <div class="kpi-card kpi-wait"><div class="kpi-label">Sin PO</div><div class="kpi-value" id="kpiSinPO">0</div></div>
+            <div class="kpi-card kpi-print"><div class="kpi-label">Sin avance reciente</div><div class="kpi-value" id="kpiSinAvance">0</div></div>
+            <div class="kpi-card kpi-total"><div class="kpi-label">Servicios externos</div><div class="kpi-value" id="kpiServiciosExternos">0</div></div>
+            <div class="kpi-card kpi-paid"><div class="kpi-label">Servicios por pagar</div><div class="kpi-value" id="kpiServiciosPorPagar">0</div></div>
+            <div class="kpi-card kpi-total"><div class="kpi-label">Facturas clientes</div><div class="kpi-value" id="kpiFacturasClientes">0</div></div>
+            <div class="kpi-card kpi-bill"><div class="kpi-label">Facturas vencidas</div><div class="kpi-value" id="kpiFacturasVencidas">0</div></div>
+          </div>
+
+          <div id="financialKpis" class="kpi-grid compact-kpis gerencia-kpis hidden" data-montos="true">
+            <div class="kpi-card kpi-total"><div class="kpi-label">Monto servicios abiertos</div><div class="kpi-value" id="kpiMontoServiciosAbiertos">$0</div></div>
+            <div class="kpi-card kpi-bill"><div class="kpi-label">Monto por pagar proveedores</div><div class="kpi-value" id="kpiMontoPorPagar">$0</div></div>
+            <div class="kpi-card kpi-paid"><div class="kpi-label">Monto por cobrar clientes</div><div class="kpi-value" id="kpiMontoPorCobrarClientes">$0</div></div>
+          </div>
+
+          <div class="gerencia-section">
+            <h3>Filtros</h3>
+            <p>El periodo permite evaluar altas, actividad, entregas, facturación, vencimientos, cobros o pagos a proveedores sin modificar datos.</p>
+            <div class="gerencia-toolbar">
+              <div class="form-group">
+                <label for="filterFechaInicio">Fecha inicio</label>
+                <input id="filterFechaInicio" type="date" />
+              </div>
+              <div class="form-group">
+                <label for="filterFechaFin">Fecha fin</label>
+                <input id="filterFechaFin" type="date" />
+              </div>
+              <div class="form-group">
+                <label for="filterCriterioPeriodo">Tipo de movimiento a evaluar</label>
+                <select id="filterCriterioPeriodo">
+                  <option value="proyecto_alta">Proyectos creados en el periodo</option>
+                  <option value="proyecto_ultima">Proyectos con avance/movimiento en el periodo</option>
+                  <option value="proyecto_entrega">Proyectos entregados en el periodo</option>
+                  <option value="factura_fecha">Facturas emitidas a clientes en el periodo</option>
+                  <option value="factura_vencimiento">Facturas de clientes que vencen/vencieron en el periodo</option>
+                  <option value="factura_pago">Facturas cobradas a clientes en el periodo</option>
+                  <option value="servicio_solicitud">Servicios externos solicitados en el periodo</option>
+                  <option value="servicio_factura">Facturas de proveedor recibidas en el periodo</option>
+                  <option value="servicio_pago">Pagos a proveedores realizados en el periodo</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex:0 0 auto; min-width:auto; align-self:flex-end;">
+                <button id="btnLimpiarPeriodo" class="btn btn-secondary" type="button">Limpiar periodo</button>
+              </div>
+            </div>
+            <div id="periodInfo" class="period-note">Sin filtro de periodo aplicado. Si capturas una fecha, se evaluarán por defecto los proyectos creados en ese periodo.</div>
+            <div class="period-help">
+              <strong>Cómo leer este filtro:</strong> el rango de fechas no significa siempre lo mismo. Depende del tipo de movimiento seleccionado. Por ejemplo, “Proyectos creados” usa el ID del proyecto en milisegundos; “Facturas emitidas” usa la fecha de factura; “Facturas cobradas” usa la fecha de pago; y “Pagos a proveedores” usa la fecha de pago del servicio externo.
+            </div>
+            <div class="gerencia-toolbar" style="margin-top:14px;">
+              <div class="form-group"><input id="searchInput" type="text" placeholder="Buscar ID, proyecto, cliente, responsable o proveedor" /></div>
+              <div class="form-group"><select id="filterCliente"><option value="">Cliente</option></select></div>
+              <div class="form-group"><select id="filterResponsable"><option value="">Responsable</option></select></div>
+              <div class="form-group">
+                <select id="filterTipoAlerta">
+                  <option value="">Todas las alertas</option>
+                  <option value="Entregado sin facturar">Entregado sin facturar</option>
+                  <option value="Facturado sin pagar">Facturado sin pagar</option>
+                  <option value="Sin PO">Sin PO</option>
+                  <option value="Sin avance reciente">Sin avance reciente</option>
+                  <option value="Servicio externo por pagar">Servicio externo por pagar</option>
+                  <option value="Factura cliente vencida">Factura cliente vencida</option>
+                  <option value="Factura cliente por cobrar">Factura cliente por cobrar</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="gerencia-section">
+            <h3>Alertas administrativas</h3>
+            <p>Se generan por reglas simples y trazables, sin AI ni modificación de datos.</p>
+            <div id="alertsList"></div>
+          </div>
+
+
+
+          <div class="gerencia-section">
+            <h3>Proyectos críticos</h3>
+            <p>Ordenados por prioridad administrativa. El puntaje combina facturas vencidas, entregas sin facturar, pagos externos pendientes, falta de responsable, falta de PO y avance reciente.</p>
+            <div class="table-wrapper" style="max-height:360px;">
+              <table class="projects-table gerencia-table">
+                <thead>
+                  <tr>
+                    <th>Prioridad</th>
+                    <th>Puntaje</th>
+                    <th>ID</th>
+                    <th>Proyecto</th>
+                    <th>Cliente</th>
+                    <th>Responsable</th>
+                    <th>Estado</th>
+                    <th>Motivos</th>
+                  </tr>
+                </thead>
+                <tbody id="criticalProjectsBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="gerencia-section">
+            <h3>Proyectos filtrados</h3>
+            <div class="table-wrapper" style="max-height:360px;">
+              <table class="projects-table gerencia-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Proyecto</th>
+                    <th>Cliente</th>
+                    <th>Responsable</th>
+                    <th>Estado</th>
+                    <th>PO</th>
+                    <th>Última fecha</th>
+                  </tr>
+                </thead>
+                <tbody id="projectsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel panel-right gerencia-panel-scroll">
+          <div class="gerencia-section">
+            <h3>Detalle seleccionado</h3>
+            <div id="detailEmpty" class="empty-soft">Selecciona una alerta o un proyecto para ver el detalle.</div>
+            <div id="detailContent" class="hidden">
+              <div class="detail-hero" style="margin-bottom:14px;">
+                <div class="detail-hero-main">
+                  <div class="detail-icon">📊</div>
+                  <div>
+                    <div class="detail-mini" id="detailMini">Registro</div>
+                    <h3 id="detailTitle">Detalle</h3>
+                    <div class="detail-meta-line" id="detailMeta"></div>
+                  </div>
+                </div>
+                <span id="detailBadge" class="status-badge">Estado</span>
+              </div>
+              <div id="detailGrid" class="gerencia-detail-grid"></div>
+            </div>
+          </div>
+
+          <div class="gerencia-section">
+            <h3>Resumen por cliente</h3>
+            <div class="table-wrapper" style="max-height:310px;">
+              <table class="gerencia-small-table">
+                <thead><tr><th>Cliente</th><th>Proyectos</th><th>Entregados sin facturar</th><th>Facturados sin pagar</th><th>Servicios externos</th><th>Facturas por cobrar</th></tr></thead>
+                <tbody id="clientesSummaryBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="gerencia-section">
+            <h3>Resumen por responsable</h3>
+            <div class="table-wrapper" style="max-height:310px;">
+              <table class="gerencia-small-table">
+                <thead><tr><th>Responsable</th><th>Proyectos</th><th>En desarrollo</th><th>En espera</th><th>Entregados</th></tr></thead>
+                <tbody id="responsablesSummaryBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="gerencia-section" data-montos="true">
+            <h3>Servicios externos por pagar</h3>
+            <div class="table-wrapper" style="max-height:310px;">
+              <table class="gerencia-small-table">
+                <thead><tr><th>Proyecto</th><th>Cliente</th><th>Proveedor</th><th>Estatus</th><th>Monto</th></tr></thead>
+                <tbody id="serviciosPorPagarBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="gerencia-section" data-montos="true">
+            <h3>Facturas clientes por cobrar</h3>
+            <div class="table-wrapper" style="max-height:310px;">
+              <table class="gerencia-small-table">
+                <thead><tr><th>Proyecto</th><th>Cliente</th><th>Factura</th><th>Estado</th><th>Vencimiento</th><th>Monto</th></tr></thead>
+                <tbody id="facturasPorCobrarBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+    </section>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/gerencia.js"></script>
+</body>
+</html>
