@@ -18,6 +18,10 @@ window.UI = {
     this.els.btnNuevoProyecto = document.getElementById("btnNuevoProyecto");
     this.els.btnNuevoCliente = document.getElementById("btnNuevoCliente");
     this.els.btnEliminarCliente = document.getElementById("btnEliminarCliente");
+    this.els.btnServiciosExternos = document.getElementById("btnServiciosExternos");
+    this.els.btnPanelGerencial = document.getElementById("btnPanelGerencial");
+    this.els.btnFacturasClientes = document.getElementById("btnFacturasClientes");
+    this.els.btnLogisticaEntregas = document.getElementById("btnLogisticaEntregas");
     this.els.badgePanelRevision = document.getElementById("badgePanelRevision");
     this.els.badgePanelRevisionLiberado = document.getElementById("badgePanelRevisionLiberado");
     this.els.badgeLogisticaEntregas = document.getElementById("badgeLogisticaEntregas");
@@ -148,9 +152,30 @@ window.UI = {
     window.open(link, "_blank", "noopener,noreferrer");
   },
 
+
+  canAccessModule(modulo) {
+    return !!window.Auth?.hasPermiso?.(modulo);
+  },
+
+  toggleModuleButtons() {
+    if (this.els.btnServiciosExternos) {
+      this.els.btnServiciosExternos.classList.toggle("hidden", !this.canAccessModule("ServiciosExternos"));
+    }
+    if (this.els.btnPanelGerencial) {
+      this.els.btnPanelGerencial.classList.toggle("hidden", !this.canAccessModule("Gerencia"));
+    }
+    if (this.els.btnFacturasClientes) {
+      this.els.btnFacturasClientes.classList.toggle("hidden", !this.canAccessModule("FacturasClientes"));
+    }
+    if (this.els.btnLogisticaEntregas) {
+      this.els.btnLogisticaEntregas.classList.toggle("hidden", !this.canAccessModule("Logistica"));
+    }
+  },
+
   showLogin() {
     if (this.els.loginView) this.els.loginView.classList.add("active");
     if (this.els.mainView) this.els.mainView.classList.remove("active");
+    this.toggleModuleButtons();
   },
 
   showMain() {
@@ -170,6 +195,7 @@ window.UI = {
     if (this.els.btnEliminarCliente) {
       this.els.btnEliminarCliente.classList.toggle("hidden", !user?.administrador);
     }
+    this.toggleModuleButtons();
   },
 
   setLoginMessage(text, type = "") {

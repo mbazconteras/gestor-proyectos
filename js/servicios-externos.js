@@ -7,6 +7,7 @@ window.ServiciosExternosApp = {
     cursosCatalogo: [],
     proveedoresCursos: {},
     selectedKey: null,
+    puedeVerModulo: false,
     puedeVerMontos: false
   },
 
@@ -125,14 +126,17 @@ window.ServiciosExternosApp = {
     const btnNuevoProveedorExterno = document.getElementById("btnNuevoProveedorExterno");
 
     if (sessionBadge) {
-      sessionBadge.textContent = `${user?.nombre || user?.usuario || ""}${user?.administrador ? " · Admin" : ""}`;
+      const tags = [];
+      if (this.state.puedeVerModulo) tags.push("Servicios externos");
+      if (this.state.puedeVerMontos) tags.push("Montos");
+      sessionBadge.textContent = `${user?.nombre || user?.usuario || ""}${tags.length ? " · " + tags.join(" · ") : ""}`;
     }
 
     if (btnNuevoServicioExterno) {
-      btnNuevoServicioExterno.classList.toggle("hidden", !user?.administrador);
+      btnNuevoServicioExterno.classList.toggle("hidden", !this.state.puedeVerModulo);
     }
     if (btnNuevoProveedorExterno) {
-      btnNuevoProveedorExterno.classList.toggle("hidden", !user?.administrador);
+      btnNuevoProveedorExterno.classList.toggle("hidden", !this.state.puedeVerModulo);
     }
   },
 
@@ -162,6 +166,12 @@ window.ServiciosExternosApp = {
 
       await window.Auth.login(usuario, password);
       await this.loadUserPermissions();
+
+      if (!this.state.puedeVerModulo) {
+        window.Auth.logout();
+        throw new Error("No tienes permiso para acceder a Servicios Externos. Solicita al administrador el permiso Permisos.ServiciosExternos=true.");
+      }
+
       this.showMain();
       await this.loadAllData();
     } catch (err) {
@@ -179,6 +189,7 @@ window.ServiciosExternosApp = {
     this.state.cursosCatalogo = [];
     this.state.proveedoresCursos = {};
     this.state.selectedKey = null;
+    this.state.puedeVerModulo = false;
     this.showLogin();
     this.showEmptyDetail();
     this.setMessage("loginMessage", "", "");
@@ -188,7 +199,12 @@ window.ServiciosExternosApp = {
 
   async loadUserPermissions() {
     const current = window.Auth.currentUser;
-    this.state.puedeVerMontos = this.getBool(current?.raw?.PuedeVerMontos);
+    const raw = current?.raw || {};
+    const permisos = raw?.Permisos && typeof raw.Permisos === "object" ? raw.Permisos : {};
+
+    this.state.puedeVerModulo = this.getBool(permisos.ServiciosExternos);
+    this.state.puedeVerMontos = this.getBool(permisos.Montos);
+
     document.querySelectorAll('[data-montos="true"]').forEach((el) => {
       el.classList.toggle("hidden", !this.state.puedeVerMontos);
     });
@@ -820,8 +836,8 @@ window.ServiciosExternosApp = {
   async handleCreateProvider() {
     this.setMessage("newProviderMessage", "", "");
     try {
-      if (!window.Auth.currentUser?.administrador) {
-        throw new Error("Solo un administrador puede crear proveedores.");
+      if (!this.state.puedeVerModulo) {
+        throw new Error("No tienes permiso para crear proveedores externos.");
       }
 
       const empresa = this.getText(document.getElementById("nuevoProveedorEmpresa")?.value);
@@ -868,8 +884,8 @@ window.ServiciosExternosApp = {
   async handleCreateService() {
     this.setMessage("newServiceMessage", "", "");
     try {
-      if (!window.Auth.currentUser?.administrador) {
-        throw new Error("Solo un administrador puede crear servicios externos.");
+      if (!this.state.puedeVerModulo) {
+        throw new Error("No tienes permiso para crear servicios externos.");
       }
 
       const projectId = document.getElementById("nuevoProyectoSelect")?.value || "";

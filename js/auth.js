@@ -12,6 +12,20 @@ window.Auth = {
     return txt === "true" || txt === "1" || txt === "si" || txt === "sí";
   },
 
+  getPermisos() {
+    const raw = this.currentUser?.raw || {};
+    const permisos = raw?.Permisos;
+    return permisos && typeof permisos === "object" ? permisos : {};
+  },
+
+  hasPermiso(modulo) {
+    const nombre = this.getText(modulo);
+    if (!nombre) return false;
+    const permisos = this.getPermisos();
+    return this.getBool(permisos[nombre]);
+  },
+
+
   async crearCuentaPendiente(usuario, password) {
     const nombre = this.getText(usuario);
     const pwd = this.getText(password);

@@ -8,6 +8,7 @@ window.Logistica = {
   usuarios: [],
   configLogistica: {},
   sugerenciasActuales: [],
+  puedeVerModulo: false,
   filters: { paquetes: "", estado: "Pendiente" },
   plantFilters: { search: "", estado: "activas" },
   selectedPlantaKey: "",
@@ -152,10 +153,30 @@ window.Logistica = {
     el.className = `message ${type}`.trim();
   },
 
+  getBool(value) {
+    if (value === true || value === false) return value;
+    const txt = String(value ?? "").trim().toLowerCase();
+    return txt === "true" || txt === "1" || txt === "si" || txt === "sí";
+  },
+
+  loadUserPermissions() {
+    const current = window.Auth.currentUser;
+    const raw = current?.raw || {};
+    const permisos = raw?.Permisos && typeof raw.Permisos === "object" ? raw.Permisos : {};
+    this.puedeVerModulo = this.getBool(permisos.Logistica);
+  },
+
   async handleLogin() {
     this.setMessage(this.els.loginMessage, "", "");
     try {
       await window.Auth.login(this.els.loginUsuario.value, this.els.loginPassword.value);
+      this.loadUserPermissions();
+
+      if (!this.puedeVerModulo) {
+        window.Auth.logout();
+        throw new Error("No tienes permiso para acceder a Logística / Entregas. Solicita al administrador el permiso Permisos.Logistica=true.");
+      }
+
       this.showMain();
       await this.cargarSistema();
     } catch (err) {
