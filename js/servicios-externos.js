@@ -35,6 +35,8 @@ window.ServiciosExternosApp = {
     const nuevoCursoSelect = byId("nuevoCursoSelect");
     const fieldTipoServicio = byId("fieldTipoServicio");
     const fieldCurso = byId("fieldCurso");
+    const btnAbrirFacturaProveedor = byId("btnAbrirFacturaProveedor");
+    const btnAbrirNuevoFacturaProveedor = byId("btnAbrirNuevoFacturaProveedor");
 
     if (btnLogin) btnLogin.addEventListener("click", () => this.handleLogin());
     if (btnLogout) btnLogout.addEventListener("click", () => this.handleLogout());
@@ -45,6 +47,8 @@ window.ServiciosExternosApp = {
     if (btnCrearServicioExterno) btnCrearServicioExterno.addEventListener("click", () => this.handleCreateService());
     if (btnCrearProveedorExterno) btnCrearProveedorExterno.addEventListener("click", () => this.handleCreateProvider());
     if (btnGuardarServicioExterno) btnGuardarServicioExterno.addEventListener("click", () => this.handleSaveService());
+    if (btnAbrirFacturaProveedor) btnAbrirFacturaProveedor.addEventListener("click", () => this.abrirFacturaProveedor("fieldFacturaProveedor"));
+    if (btnAbrirNuevoFacturaProveedor) btnAbrirNuevoFacturaProveedor.addEventListener("click", () => this.abrirFacturaProveedor("nuevoFacturaProveedor"));
 
     if (nuevoProyectoSearch) {
       nuevoProyectoSearch.addEventListener("input", () => this.renderProjectSearchResults());
@@ -105,6 +109,26 @@ window.ServiciosExternosApp = {
     return window.Utils?.formatDateStampNow
       ? window.Utils.formatDateStampNow()
       : new Date().toLocaleString("es-MX");
+  },
+
+
+  normalizeExternalUrl(value) {
+    const raw = this.getText(value);
+    if (!raw) return "";
+    if (/^(https?:\/\/|mailto:)/i.test(raw)) return raw;
+    return `https://${raw}`;
+  },
+
+  abrirFacturaProveedor(inputId) {
+    const input = document.getElementById(inputId);
+    const raw = this.getText(input?.value);
+    if (!raw) {
+      alert("Este servicio no tiene enlace de factura proveedor.");
+      return;
+    }
+
+    const url = this.normalizeExternalUrl(raw);
+    window.open(url, "_blank", "noopener,noreferrer");
   },
 
   showLogin() {
@@ -610,7 +634,6 @@ window.ServiciosExternosApp = {
 
       const montoCell = this.state.puedeVerMontos
         ? `<td>${this.escapeHtml(this.formatMoney(item.Monto, item.Moneda))}</td>
-           <td>${this.escapeHtml(item.FacturaProveedor || "")}</td>
            <td>${this.escapeHtml(item.FechaPago || "")}</td>`
         : "";
 
