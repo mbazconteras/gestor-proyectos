@@ -460,7 +460,9 @@ window.ServiciosExternosApp = {
 
     if (esCap) {
       this.renderCursosOptions("nuevoCursoSelect");
-      this.renderProviderSelectOptions("nuevoProveedorSelect", []);
+      // Antes se dejaba vacío hasta seleccionar curso.
+      // Ahora se muestran todos los proveedores activos para no bloquear la captura.
+      this.renderProviderSelectOptions("nuevoProveedorSelect");
     } else {
       this.setValue("nuevoCursoSelect", "");
       this.renderProviderSelectOptions("nuevoProveedorSelect");
@@ -470,11 +472,15 @@ window.ServiciosExternosApp = {
   handleCursoNuevoChange() {
     const cursoId = this.getText(document.getElementById("nuevoCursoSelect")?.value);
     if (!cursoId) {
-      this.renderProviderSelectOptions("nuevoProveedorSelect", []);
+      // Sin curso seleccionado, mostrar todos los proveedores activos.
+      this.renderProviderSelectOptions("nuevoProveedorSelect");
       return;
     }
+
     const permitidos = this.getProveedoresPermitidosParaCurso(cursoId);
-    this.renderProviderSelectOptions("nuevoProveedorSelect", permitidos);
+    // Si el curso todavía no tiene proveedores relacionados, o no coinciden por nombre,
+    // no se deja vacía la lista: se muestran todos los proveedores activos.
+    this.renderProviderSelectOptions("nuevoProveedorSelect", permitidos.length ? permitidos : null);
   },
 
   handleTipoServicioDetalleChange() {
@@ -487,9 +493,14 @@ window.ServiciosExternosApp = {
       const cursoId = this.getText(document.getElementById("fieldCurso")?.value);
       if (cursoId) {
         const permitidos = this.getProveedoresPermitidosParaCurso(cursoId);
-        this.renderProviderSelectOptions("fieldProveedor", permitidos, document.getElementById("fieldProveedor")?.value || "");
+        this.renderProviderSelectOptions(
+          "fieldProveedor",
+          permitidos.length ? permitidos : null,
+          document.getElementById("fieldProveedor")?.value || ""
+        );
       } else {
-        this.renderProviderSelectOptions("fieldProveedor", []);
+        // Sin curso seleccionado, mostrar todos los proveedores activos.
+        this.renderProviderSelectOptions("fieldProveedor");
       }
     } else {
       this.setValue("fieldCurso", "");
@@ -500,11 +511,14 @@ window.ServiciosExternosApp = {
   handleCursoDetalleChange() {
     const cursoId = this.getText(document.getElementById("fieldCurso")?.value);
     if (!cursoId) {
-      this.renderProviderSelectOptions("fieldProveedor", []);
+      // Sin curso seleccionado, mostrar todos los proveedores activos.
+      this.renderProviderSelectOptions("fieldProveedor");
       return;
     }
+
     const permitidos = this.getProveedoresPermitidosParaCurso(cursoId);
-    this.renderProviderSelectOptions("fieldProveedor", permitidos);
+    // Si no hay relación válida curso/proveedor, mostrar todos los proveedores activos.
+    this.renderProviderSelectOptions("fieldProveedor", permitidos.length ? permitidos : null);
   },
 
   renderProjectSearchResults() {
