@@ -145,7 +145,6 @@
                   <th>Estatus</th>
                   <th>F. solicitud</th>
                   <th class="col-montos hidden" data-montos="true">Monto</th>
-                  <th class="col-montos hidden" data-montos="true">Factura prov.</th>
                   <th class="col-montos hidden" data-montos="true">F. pago</th>
                 </tr>
               </thead>
@@ -296,8 +295,11 @@
                 </div>
 
                 <div class="form-group">
-                  <label for="fieldFacturaProveedor">Factura proveedor</label>
-                  <input type="text" id="fieldFacturaProveedor" />
+                  <label for="fieldFacturaProveedor">Link factura proveedor</label>
+                  <div class="inline-action">
+                    <input type="url" id="fieldFacturaProveedor" placeholder="https://..." />
+                    <button id="btnAbrirFacturaProveedor" class="btn btn-secondary" type="button">Abrir factura</button>
+                  </div>
                 </div>
 
                 <div class="form-group">
@@ -446,8 +448,11 @@
           </div>
 
           <div class="form-group">
-            <label for="nuevoFacturaProveedor">Factura proveedor</label>
-            <input type="text" id="nuevoFacturaProveedor" />
+            <label for="nuevoFacturaProveedor">Link factura proveedor</label>
+            <div class="inline-action">
+              <input type="url" id="nuevoFacturaProveedor" placeholder="https://..." />
+              <button id="btnAbrirNuevoFacturaProveedor" class="btn btn-secondary" type="button">Abrir factura</button>
+            </div>
           </div>
 
           <div class="form-group">
