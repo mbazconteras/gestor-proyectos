@@ -69,6 +69,10 @@ window.UI = {
     const btnCerrarModalEliminarCliente = byId("btnCerrarModalEliminarCliente");
     const btnEliminarClienteConfirmar = byId("btnEliminarClienteConfirmar");
     const btnAbrirAdjunto = byId("btnAbrirAdjunto");
+    const btnAbrirPO = byId("btnAbrirPO");
+    const btnAbrirCotizacion = byId("btnAbrirCotizacion");
+    const fieldLinkPO = byId("fieldLinkPO");
+    const fieldLinkCotizacion = byId("fieldLinkCotizacion");
     const thSortID = byId("thSortID");
     const btnCalCenter = byId("btnCalCenter");
     const btnCerrarCalCenter = byId("btnCerrarCalCenter");
@@ -89,6 +93,10 @@ window.UI = {
     if (btnCerrarModalEliminarCliente) btnCerrarModalEliminarCliente.addEventListener("click", () => this.closeDeleteClientModal());
     if (btnEliminarClienteConfirmar) btnEliminarClienteConfirmar.addEventListener("click", window.App.handleEliminarCliente);
     if (btnAbrirAdjunto) btnAbrirAdjunto.addEventListener("click", this.abrirAdjunto);
+    if (btnAbrirPO) btnAbrirPO.addEventListener("click", () => this.abrirDocumento("fieldLinkPO", "orden de compra"));
+    if (btnAbrirCotizacion) btnAbrirCotizacion.addEventListener("click", () => this.abrirDocumento("fieldLinkCotizacion", "cotización"));
+    if (fieldLinkPO) fieldLinkPO.addEventListener("input", () => this.updateDocumentStatus("fieldLinkPO", "btnAbrirPO", "statusLinkPO"));
+    if (fieldLinkCotizacion) fieldLinkCotizacion.addEventListener("input", () => this.updateDocumentStatus("fieldLinkCotizacion", "btnAbrirCotizacion", "statusLinkCotizacion"));
     if (thSortID) thSortID.addEventListener("click", window.App.toggleSortById);
     if (btnCalCenter) btnCalCenter.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -143,13 +151,38 @@ window.UI = {
   },
 
   abrirAdjunto() {
-    const linkInput = document.getElementById("fieldLink");
-    const link = linkInput ? linkInput.value.trim() : "";
+    this.abrirDocumento("fieldLink", "adjunto");
+  },
+
+  abrirDocumento(fieldId, descripcion = "documento") {
+    const linkInput = document.getElementById(fieldId);
+    let link = linkInput ? linkInput.value.trim() : "";
+
     if (!link) {
-      alert("Este proyecto no tiene un enlace adjunto.");
+      alert(`Este proyecto no tiene enlace para ${descripcion}.`);
       return;
     }
+
+    if (!/^https?:\/\//i.test(link)) {
+      link = `https://${link}`;
+    }
+
     window.open(link, "_blank", "noopener,noreferrer");
+  },
+
+  updateDocumentStatus(fieldId, buttonId, statusId) {
+    const input = document.getElementById(fieldId);
+    const button = document.getElementById(buttonId);
+    const status = document.getElementById(statusId);
+    const hasLink = !!input?.value.trim();
+
+    if (button) button.disabled = !hasLink;
+
+    if (status) {
+      status.textContent = hasLink ? "Documento disponible" : "Sin documento";
+      status.classList.toggle("document-status-ok", hasLink);
+      status.classList.toggle("document-status-empty", !hasLink);
+    }
   },
 
 
@@ -733,6 +766,10 @@ window.UI = {
     setValue("fieldPO", registro.PO);
     this.renderResponsableDetalleOptions(registro.Nombre);
     setValue("fieldLink", registro.Link);
+    setValue("fieldLinkPO", registro.LinkPO);
+    setValue("fieldLinkCotizacion", registro.LinkCotizacion);
+    this.updateDocumentStatus("fieldLinkPO", "btnAbrirPO", "statusLinkPO");
+    this.updateDocumentStatus("fieldLinkCotizacion", "btnAbrirCotizacion", "statusLinkCotizacion");
 
     const entregaInfo = this.parseEntregaDetalle(registro.Entregado);
     setValue("fieldQuienEntrega", entregaInfo.quienEntrega);
@@ -816,6 +853,8 @@ window.UI = {
     registro.PO = getValue("fieldPO");
     registro.Nombre = getValue("fieldNombre");
     registro.Link = getValue("fieldLink");
+    registro.LinkPO = getValue("fieldLinkPO");
+    registro.LinkCotizacion = getValue("fieldLinkCotizacion");
 
     const quienEntrega = window.Utils.normalizarTexto(getValue("fieldQuienEntrega"));
     const quienRecibe = window.Utils.normalizarTexto(getValue("fieldQuienRecibe"));

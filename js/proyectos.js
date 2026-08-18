@@ -82,7 +82,10 @@ window.Proyectos = {
 
     for (const key of Object.keys(data)) {
       try {
-        const normalizado = window.Utils.normalizarRegistro(key, data[key]);
+        const raw = data[key] || {};
+        const normalizado = window.Utils.normalizarRegistro(key, raw);
+        normalizado.LinkPO = window.Utils.normalizarTexto(raw.LinkPO);
+        normalizado.LinkCotizacion = window.Utils.normalizarTexto(raw.LinkCotizacion);
 
         if (this.usuarioPuedeVer(normalizado)) {
           arr.push(normalizado);
@@ -207,6 +210,8 @@ window.Proyectos = {
     payload.PO = window.Utils.normalizarTexto(payload.PO);
     payload.Nombre = window.Utils.normalizarTexto(payload.Nombre);
     payload.Link = window.Utils.normalizarTexto(payload.Link);
+    payload.LinkPO = window.Utils.normalizarTexto(payload.LinkPO);
+    payload.LinkCotizacion = window.Utils.normalizarTexto(payload.LinkCotizacion);
     payload.Entregado = window.Utils.normalizarTexto(payload.Entregado);
     payload.FechaEntrega = window.Utils.normalizarFechaTexto(payload.FechaEntrega);
     payload.In_DateStamp = window.Utils.normalizarTexto(payload.In_DateStamp);
@@ -265,6 +270,8 @@ window.Proyectos = {
 
     const idx = this.all.findIndex((x) => x._firebaseKey === key);
     const normalized = window.Utils.normalizarRegistro(key, payload);
+    normalized.LinkPO = window.Utils.normalizarTexto(payload.LinkPO);
+    normalized.LinkCotizacion = window.Utils.normalizarTexto(payload.LinkCotizacion);
 
     if (idx >= 0) {
       this.all[idx] = normalized;
@@ -320,6 +327,8 @@ window.Proyectos = {
       PO: window.Utils.normalizarTexto(datos.PO),
       Nombre: window.Utils.normalizarTexto(datos.Nombre),
       Link: "",
+      LinkPO: "",
+      LinkCotizacion: "",
       Historial: historialInicial || `${window.Utils.formatDateStampNow()} - ${usuario} creó el proyecto`,
       Entregado: "",
       FechaEntrega: "",
@@ -348,6 +357,8 @@ window.Proyectos = {
     }
 
     const normalized = window.Utils.normalizarRegistro(key, payload);
+    normalized.LinkPO = window.Utils.normalizarTexto(payload.LinkPO);
+    normalized.LinkCotizacion = window.Utils.normalizarTexto(payload.LinkCotizacion);
 
     if (this.usuarioPuedeVer(normalized) || window.Auth.currentUser?.administrador) {
       this.all.push(normalized);
